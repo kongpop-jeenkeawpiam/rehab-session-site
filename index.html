@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Daily knee home rehabilitation session tracker with exercise checklist, progress, safety checks, and notes." />
+  <title>Knee Rehab Session Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">Home Rehabilitation</p>
+      <h1>Knee Rehab Session Tracker</h1>
+      <p class="subtitle">Daily home rehabilitation plan and safety checklist</p>
+
+      <div class="session-panel" aria-label="Session summary">
+        <div>
+          <span class="meta-label">Today’s session</span>
+          <strong id="session-date">Loading date…</strong>
+        </div>
+        <div>
+          <span class="meta-label">Last updated</span>
+          <strong id="last-updated">Not started yet</strong>
+        </div>
+        <div class="timer-panel" role="group" aria-label="Session timer">
+          <span class="meta-label">Session timer</span>
+          <strong id="session-timer" aria-live="polite">00:00</strong>
+          <div class="timer-actions">
+            <button type="button" id="timer-toggle" class="button primary-button">Start</button>
+            <button type="button" id="timer-reset" class="button secondary-button">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="progress-card" aria-labelledby="progress-heading">
+        <div class="progress-heading-row">
+          <h2 id="progress-heading">Progress</h2>
+          <p id="progress-text" aria-live="polite">Progress: <span id="completed-count">0</span> / <span id="total-count">14</span> completed</p>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="card plan-card" aria-labelledby="daily-plan-heading">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true">📅</span>
+          <div>
+            <h2 id="daily-plan-heading">Daily Rehabilitation Plan</h2>
+            <p>Perform these exercises daily from today until your next physical therapy session.</p>
+          </div>
+        </div>
+
+        <div class="exercise-grid">
+          <article class="exercise-summary">
+            <h3>1. Wall Sit <span>(Shallow Angle)</span></h3>
+            <dl>
+              <div>
+                <dt>Volume / Dosage</dt>
+                <dd>Hold 30 sec × 10 reps <br><strong>Total: 2 Sets</strong></dd>
+              </div>
+              <div>
+                <dt>Recommended Timing</dt>
+                <dd>After returning to dorm / Before bed</dd>
+              </div>
+              <div>
+                <dt>Primary Focus</dt>
+                <dd>Maintain a 50:50 weight distribution between both legs.</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="exercise-summary">
+            <h3>2. Straight Leg Raise <span>(SLR)</span></h3>
+            <dl>
+              <div>
+                <dt>Volume / Dosage</dt>
+                <dd>Hold 5 sec × 15 reps <br><strong>Total: 3 Sets</strong></dd>
+              </div>
+              <div>
+                <dt>Recommended Timing</dt>
+                <dd>While relaxing / Watching basketball highlights</dd>
+              </div>
+              <div>
+                <dt>Primary Focus</dt>
+                <dd>Turn toes out 15° to activate the inner thigh muscle (<strong>VMO</strong>).</dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-green" aria-labelledby="wall-sit-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">🟢</span>
+          <div>
+            <h2 id="wall-sit-heading">Exercise 1: Wall Sit</h2>
+            <p>Joint protection and balance tuning</p>
+          </div>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="wall" role="group" aria-labelledby="wall-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="wall-set-heading">Wall Sit Sets</h3>
+              <p><span id="wall-set-count">0</span> / <span id="wall-set-total">2</span> sets</p>
+            </div>
+            <button type="button" id="wall-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="wall-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="wall-set-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">30 sec hold</span>
+            <button type="button" id="wall-set-1-toggle" class="set-play-button" aria-label="Start Wall Sit set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="wall-set-1-done" aria-label="Wall Sit set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="wall-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="wall-set-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">30 sec hold</span>
+            <button type="button" id="wall-set-2-toggle" class="set-play-button" aria-label="Start Wall Sit set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="wall-set-2-done" aria-label="Wall Sit set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="checklist" data-section="Wall Sit">
+          <div class="check-item">
+            <input type="checkbox" id="wall-setup" data-checklist-item />
+            <label for="wall-setup"><strong>Setup:</strong> Upper back and hips are flat against the wall. No leaning or shifting hip weight to one side.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="wall-angle" data-checklist-item />
+            <label for="wall-angle"><strong>Angle:</strong> Slide down to a shallow angle (<strong>30°–45° only</strong>). Do <strong>not</strong> go down to a 90° deep squat. Keep knees behind your toes.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="wall-foot-position" data-checklist-item />
+            <label for="wall-foot-position"><strong>Foot Position:</strong> Feet are hip-width apart, or slightly wider, with toes pointed slightly outward (15°).</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="wall-data-check" data-checklist-item />
+            <label for="wall-data-check"><strong>Data Check:</strong> Mindfully press the foot of your injured leg firmly into the floor. Do not let your healthy leg steal the workload.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="wall-safety-check" data-checklist-item />
+            <label for="wall-safety-check"><strong>Safety Check:</strong> During the 30-second hold, feel the burn only in the thigh muscles. There should be <strong>no sharp pain inside the joint</strong> and <strong>no clicking/grating sounds</strong>.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-blue" aria-labelledby="slr-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">🔵</span>
+          <div>
+            <h2 id="slr-heading">Exercise 2: Straight Leg Raise</h2>
+            <p>Knee lock and VMO activation</p>
+          </div>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="slr" role="group" aria-labelledby="slr-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="slr-set-heading">Straight Leg Raise Sets</h3>
+              <p><span id="slr-set-count">0</span> / <span id="slr-set-total">3</span> sets</p>
+            </div>
+            <button type="button" id="slr-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="slr-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="slr-set-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="slr-set-1-toggle" class="set-play-button" aria-label="Start Straight Leg Raise set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="slr-set-1-done" aria-label="Straight Leg Raise set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="slr-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="slr-set-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="slr-set-2-toggle" class="set-play-button" aria-label="Start Straight Leg Raise set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="slr-set-2-done" aria-label="Straight Leg Raise set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="slr-3">
+            <span class="set-number" aria-label="Set 3">3</span>
+            <span id="slr-set-3-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="slr-set-3-toggle" class="set-play-button" aria-label="Start Straight Leg Raise set 3">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="slr-set-3-done" aria-label="Straight Leg Raise set 3 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="checklist" data-section="Straight Leg Raise">
+          <div class="check-item">
+            <input type="checkbox" id="slr-setup" data-checklist-item />
+            <label for="slr-setup"><strong>Setup:</strong> Lie flat on your back on the bed. Bend the knee of your healthy leg to stabilize your lower back.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="slr-lock-twist" data-checklist-item />
+            <label for="slr-lock-twist"><strong>Lock &amp; Twist:</strong> Fully lock the knee of your injured leg straight until the kneecap floats. Then rotate your entire foot outward by 15°.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="slr-tempo-lift" data-checklist-item />
+            <label for="slr-tempo-lift"><strong>Tempo — Lift:</strong> Lift the leg up slowly while counting 1-2-3, about 1 foot / 30 cm off the bed.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="slr-tempo-hold" data-checklist-item />
+            <label for="slr-tempo-hold"><strong>Tempo — Hold:</strong> Squeeze and hold firmly at the top for 5 seconds.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="slr-tempo-lower" data-checklist-item />
+            <label for="slr-tempo-lower"><strong>Tempo — Lower:</strong> Lower the leg down slowly while counting 3-2-1. Do not let the leg drop loosely.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="slr-data-check" data-checklist-item />
+            <label for="slr-data-check"><strong>Data Check:</strong> Feel a distinct contraction/burn in the inner thigh muscle (VMO), located just above the inner side of your kneecap.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-warning" aria-labelledby="monitoring-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">🔴</span>
+          <div>
+            <h2 id="monitoring-heading">Post-Rehab Monitoring</h2>
+            <p>Delayed response check</p>
+          </div>
+        </div>
+
+        <div class="safety-reminder" role="note">
+          Stop and follow your physical therapist’s guidance if you notice sharp joint pain, increased swelling, or clicking/grating during the session.
+        </div>
+
+        <div class="checklist" data-section="Post-Rehab Monitoring">
+          <div class="check-item warning-item">
+            <input type="checkbox" id="monitor-immediate" data-checklist-item />
+            <label for="monitor-immediate"><strong>Immediately after finishing:</strong> The knee joint feels stable and has no increased throbbing or sharp pain.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="monitor-next-morning" data-checklist-item />
+            <label for="monitor-next-morning"><strong>Next Morning Check:</strong> The knee is not swollen, tight, or stiff.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="monitor-walking" data-checklist-item />
+            <label for="monitor-walking"><strong>Walking Check:</strong> Normal walking on flat ground feels smooth and pain-free.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card notes-card" aria-labelledby="notes-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">📝</span>
+          <div>
+            <h2 id="notes-heading">Session Notes</h2>
+            <p>Optional notes about pain, swelling, stiffness, or anything to tell your PT.</p>
+          </div>
+        </div>
+        <label class="notes-label" for="session-notes">Notes</label>
+        <textarea id="session-notes" rows="5" placeholder="Example: Mild thigh burn only, no joint pain. Knee felt normal next morning."></textarea>
+      </section>
+    </main>
+
+    <footer class="footer-actions">
+      <button type="button" id="reset-checklist" class="button danger-button">Reset Checklist</button>
+      <button type="button" id="clear-notes" class="button secondary-button">Clear Notes</button>
+      <p class="footer-note">This tracker is for following your given rehab plan. It does not replace medical advice.</p>
+    </footer>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
