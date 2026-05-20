@@ -37,8 +37,8 @@ const exerciseSetTrackers = [
     label: "Wall Sit",
     totalSets: 2,
     sets: [
-      { id: "wall-1", target: "30 sec hold" },
-      { id: "wall-2", target: "30 sec hold" }
+      { id: "wall-1", target: "10 reps" },
+      { id: "wall-2", target: "10 reps" }
     ]
   },
   {
@@ -56,11 +56,11 @@ const exerciseSetTrackers = [
 let setRowIntervalId = null;
 
 const setRowState = {
-  "wall-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false },
-  "wall-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false },
-  "slr-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false },
-  "slr-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false },
-  "slr-3": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false }
+  "wall-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
+  "wall-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
+  "slr-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
+  "slr-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
+  "slr-3": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 }
 };
 
 const formatDateTime = (value) => {
@@ -182,7 +182,14 @@ const saveSetRows = () => {
       elapsedMs: normalizeElapsedMs(rowState.elapsedMs),
       startedAt: Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null,
       isRunning: Boolean(rowState.isRunning),
-      isDone: rowState.isDone === true
+      isDone: rowState.isDone === true,
+      isRepLoop: rowState.isRepLoop === true,
+      totalReps: rowState.totalReps,
+      currentRep: rowState.currentRep,
+      repState: rowState.repState,
+      timeRemainingSec: rowState.timeRemainingSec,
+      workDurationSec: rowState.workDurationSec,
+      restDurationSec: rowState.restDurationSec
     };
   });
 
@@ -195,11 +202,25 @@ const restoreSetRows = () => {
   getAllSetRows().forEach((set) => {
     const storedState = storedRows[set.id];
     const startedAt = Number(storedState?.startedAt);
+    const isRepLoop = true;
+    const isWallSit = set.id.startsWith("wall");
+    const totalReps = isWallSit ? 10 : 15;
+    const workDurationSec = isWallSit ? 30 : 5;
+    const restDurationSec = isWallSit ? 15 : 3;
 
     setRowState[set.id].elapsedMs = normalizeElapsedMs(storedState?.elapsedMs);
     setRowState[set.id].startedAt = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
     setRowState[set.id].isRunning = storedState?.isRunning === true && setRowState[set.id].startedAt !== null;
     setRowState[set.id].isDone = storedState?.isDone === true;
+
+    setRowState[set.id].isRepLoop = isRepLoop;
+    setRowState[set.id].totalReps = Number(storedState?.totalReps) || totalReps;
+    setRowState[set.id].currentRep = Number(storedState?.currentRep) || 1;
+    setRowState[set.id].repState = storedState?.repState || "work";
+    setRowState[set.id].timeRemainingSec = typeof storedState?.timeRemainingSec === "number" ? storedState.timeRemainingSec : workDurationSec;
+    setRowState[set.id].workDurationSec = Number(storedState?.workDurationSec) || workDurationSec;
+    setRowState[set.id].restDurationSec = Number(storedState?.restDurationSec) || restDurationSec;
+    setRowState[set.id].isRunning = false; // keep it paused on refresh
   });
 };
 
@@ -335,6 +356,75 @@ const restoreChecklist = () => {
   updateProgress();
 };
 
+const playBeep = (frequency = 800, duration = 0.15) => {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+    oscillator.start(audioCtx.currentTime);
+    oscillator.stop(audioCtx.currentTime + duration);
+  } catch (error) {
+    console.warn("AudioContext beep failed", error);
+  }
+};
+
+const triggerVisualFlash = (element) => {
+  if (!element) return;
+  element.classList.add("flash-highlight");
+  window.setTimeout(() => {
+    element.classList.remove("flash-highlight");
+  }, 600);
+};
+
+const handleRepLoopTick = (setId) => {
+  const state = setRowState[setId];
+  if (!state || !state.isRunning) return;
+
+  if (state.timeRemainingSec > 0) {
+    state.timeRemainingSec--;
+  }
+
+  if (state.timeRemainingSec === 0) {
+    const rowEl = getSetRowElement(setId);
+    
+    if (state.repState === "work") {
+      playBeep(800, 0.25);
+      triggerVisualFlash(rowEl);
+
+      if (state.currentRep < state.totalReps) {
+        state.repState = "rest";
+        state.timeRemainingSec = state.restDurationSec;
+      } else {
+        state.isRunning = false;
+        state.isDone = true;
+        state.currentRep = state.totalReps;
+        state.repState = "completed";
+        state.timeRemainingSec = 0;
+        playBeep(1200, 0.6);
+        setRowDone(setId, true);
+      }
+    } else if (state.repState === "rest") {
+      playBeep(600, 0.2);
+      triggerVisualFlash(rowEl);
+
+      state.currentRep++;
+      state.repState = "work";
+      state.timeRemainingSec = state.workDurationSec;
+    }
+  }
+
+  saveSetRows();
+};
+
 const clearSetRowInterval = () => {
   if (setRowIntervalId === null) return;
   window.clearInterval(setRowIntervalId);
@@ -354,14 +444,41 @@ const renderSetRow = (set) => {
   const rowState = getSetRowState(set.id);
   if (!rowState) return;
 
-  const elapsedMs = getCurrentSetRowElapsedMs(set.id);
   const row = getSetRowElement(set.id);
   const timer = getSetRowControl(set.id, "timer", ".set-time");
   const toggle = getSetRowControl(set.id, "toggle", ".set-play-button");
   const done = getSetRowControl(set.id, "done", 'input[type="checkbox"]');
+  const targetSpan = getSetRowControl(set.id, "target", ".set-target");
 
   if (row) row.classList.toggle("completed", rowState.isDone);
-  if (timer) timer.textContent = formatTimer(elapsedMs);
+
+  if (rowState.isRepLoop) {
+    if (timer) {
+      const minutes = Math.floor(rowState.timeRemainingSec / 60);
+      const seconds = rowState.timeRemainingSec % 60;
+      timer.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    if (targetSpan) {
+      const isWallSit = set.id.startsWith("wall");
+      if (rowState.isDone) {
+        targetSpan.textContent = `${rowState.totalReps} reps done`;
+      } else if (rowState.repState === "work") {
+        targetSpan.textContent = isWallSit
+          ? `Rep ${rowState.currentRep}/${rowState.totalReps}`
+          : `HOLD! - Rep ${rowState.currentRep}/${rowState.totalReps}`;
+      } else if (rowState.repState === "rest") {
+        targetSpan.textContent = isWallSit ? "Resting..." : "Relax...";
+      } else {
+        targetSpan.textContent = `${rowState.totalReps} reps`;
+      }
+    }
+  } else {
+    const elapsedMs = getCurrentSetRowElapsedMs(set.id);
+    if (timer) timer.textContent = formatTimer(elapsedMs);
+    if (targetSpan) targetSpan.textContent = set.target;
+  }
+
   if (toggle) {
     toggle.textContent = rowState.isRunning ? "❚❚" : "▶";
     toggle.setAttribute("aria-label", `${rowState.isRunning ? "Pause" : "Start"} ${set.id.replace("-", " set ")}`);
@@ -385,7 +502,15 @@ const renderSetRows = () => {
 const ensureSetRowInterval = () => {
   clearSetRowInterval();
   if (hasRunningSetRow()) {
-    setRowIntervalId = window.setInterval(renderSetRows, 1000);
+    setRowIntervalId = window.setInterval(() => {
+      getAllSetRows().forEach((set) => {
+        const state = setRowState[set.id];
+        if (state?.isRunning && state?.isRepLoop) {
+          handleRepLoopTick(set.id);
+        }
+      });
+      renderSetRows();
+    }, 1000);
   }
 };
 
@@ -393,9 +518,13 @@ const pauseSetRow = (setId) => {
   const rowState = getSetRowState(setId);
   if (!rowState?.isRunning) return;
 
-  rowState.elapsedMs = getCurrentSetRowElapsedMs(setId);
-  rowState.startedAt = null;
-  rowState.isRunning = false;
+  if (rowState.isRepLoop) {
+    rowState.isRunning = false;
+  } else {
+    rowState.elapsedMs = getCurrentSetRowElapsedMs(setId);
+    rowState.startedAt = null;
+    rowState.isRunning = false;
+  }
 };
 
 const pauseOtherSetRows = (activeSetId) => {
@@ -412,9 +541,13 @@ const toggleSetRowTimer = (setId) => {
     pauseSetRow(setId);
   } else {
     pauseOtherSetRows(setId);
-    rowState.elapsedMs = normalizeElapsedMs(rowState.elapsedMs);
-    rowState.startedAt = Date.now();
-    rowState.isRunning = true;
+    if (rowState.isRepLoop) {
+      rowState.isRunning = true;
+    } else {
+      rowState.elapsedMs = normalizeElapsedMs(rowState.elapsedMs);
+      rowState.startedAt = Date.now();
+      rowState.isRunning = true;
+    }
   }
 
   saveSetRows();
@@ -430,6 +563,17 @@ const setRowDone = (setId, isDone) => {
   rowState.isDone = isDone;
   if (isDone) {
     pauseSetRow(setId);
+    if (rowState.isRepLoop) {
+      rowState.currentRep = rowState.totalReps;
+      rowState.repState = "completed";
+      rowState.timeRemainingSec = 0;
+    }
+  } else {
+    if (rowState.isRepLoop) {
+      rowState.currentRep = 1;
+      rowState.repState = "work";
+      rowState.timeRemainingSec = rowState.workDurationSec;
+    }
   }
 
   saveSetRows();
@@ -446,11 +590,23 @@ const resetExerciseSetRows = (trackerId) => {
   if (!shouldReset) return;
 
   tracker.sets.forEach((set) => {
+    const isWallSit = set.id.startsWith("wall");
+    const totalReps = isWallSit ? 10 : 15;
+    const workDurationSec = isWallSit ? 30 : 5;
+    const restDurationSec = isWallSit ? 15 : 3;
+
     setRowState[set.id] = {
       elapsedMs: 0,
       startedAt: null,
       isRunning: false,
-      isDone: false
+      isDone: false,
+      isRepLoop: true,
+      totalReps: totalReps,
+      currentRep: 1,
+      repState: "work",
+      timeRemainingSec: workDurationSec,
+      workDurationSec: workDurationSec,
+      restDurationSec: restDurationSec
     };
   });
 

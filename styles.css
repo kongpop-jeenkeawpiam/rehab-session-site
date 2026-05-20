@@ -516,3 +516,12 @@ textarea {
     grid-column: 1 / -1;
   }
 }
+
+@keyframes flashAnimation {
+  0% { background-color: var(--warning-soft); border-color: var(--warning); transform: scale(1.02); }
+  100% { background-color: inherit; border-color: var(--border); transform: scale(1); }
+}
+
+.flash-highlight {
+  animation: flashAnimation 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
