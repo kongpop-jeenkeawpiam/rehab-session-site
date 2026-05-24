@@ -20,8 +20,18 @@ const STORAGE_KEYS = {
   notes: "kneeRehabNotes",
   lastUpdated: "kneeRehabLastUpdated",
   timer: "kneeRehabTimerState",
-  sets: "kneeRehabSetRowState"
+  sets: "kneeRehabSetRowState",
+  completedDates: "kneeRehabCompletedDates",
+  voiceCuesEnabled: "kneeRehabVoiceCuesEnabled"
 };
+
+const DEFAULT_COMPLETED_DATES = [
+  "2026-05-19",
+  "2026-05-20",
+  "2026-05-21",
+  "2026-05-22",
+  "2026-05-23"
+];
 
 let timerIntervalId = null;
 
@@ -29,6 +39,11 @@ const timerState = {
   elapsedMs: 0,
   startedAt: null,
   isRunning: false
+};
+
+const audioCueState = {
+  isEnabled: true,
+  audioContext: null
 };
 
 const exerciseSetTrackers = [
@@ -55,6 +70,14 @@ const exerciseSetTrackers = [
 
 let setRowIntervalId = null;
 
+const today = new Date();
+
+const calendarState = {
+  visibleDate: new Date(today.getFullYear(), today.getMonth(), 1),
+  selectedDateKey: null,
+  completedDates: new Set()
+};
+
 const setRowState = {
   "wall-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
   "wall-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
@@ -71,6 +94,53 @@ const formatDateTime = (value) => {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(date);
+};
+
+const formatDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const createDateFromKey = (dateKey) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(year, month, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const formatDisplayDate = (dateKey) => {
+  const date = createDateFromKey(dateKey);
+  if (!date) return "Select a date";
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(date);
+};
+
+const isFutureDateKey = (dateKey) => {
+  const date = createDateFromKey(dateKey);
+  if (!date) return false;
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return date.getTime() > todayStart.getTime();
 };
 
 const normalizeElapsedMs = (value) => {
@@ -314,6 +384,15 @@ const getCheckboxes = () => checklistItems
   .map((id) => document.getElementById(id))
   .filter(Boolean);
 
+const getChecklistStats = () => {
+  const checkboxes = getCheckboxes();
+  return {
+    checkboxes: checkboxes,
+    completed: checkboxes.filter((checkbox) => checkbox.checked).length,
+    total: checkboxes.length
+  };
+};
+
 const readStoredChecklist = () => {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.checklist) || "{}");
@@ -322,6 +401,189 @@ const readStoredChecklist = () => {
     localStorage.removeItem(STORAGE_KEYS.checklist);
     return {};
   }
+};
+
+const getValidCompletedDates = (dates) => Array.from(new Set(dates))
+  .filter((dateKey) => createDateFromKey(dateKey))
+  .sort();
+
+const readStoredCompletedDates = () => {
+  try {
+    const storedValue = localStorage.getItem(STORAGE_KEYS.completedDates);
+    if (storedValue === null) {
+      const defaultDates = getValidCompletedDates(DEFAULT_COMPLETED_DATES);
+      localStorage.setItem(STORAGE_KEYS.completedDates, JSON.stringify(defaultDates));
+      return defaultDates;
+    }
+
+    const storedDates = JSON.parse(storedValue);
+    if (!Array.isArray(storedDates)) {
+      const defaultDates = getValidCompletedDates(DEFAULT_COMPLETED_DATES);
+      localStorage.setItem(STORAGE_KEYS.completedDates, JSON.stringify(defaultDates));
+      return defaultDates;
+    }
+
+    return getValidCompletedDates(storedDates);
+  } catch (error) {
+    console.warn("Could not parse completed calendar dates. Resetting calendar history.", error);
+    const defaultDates = getValidCompletedDates(DEFAULT_COMPLETED_DATES);
+    localStorage.setItem(STORAGE_KEYS.completedDates, JSON.stringify(defaultDates));
+    return defaultDates;
+  }
+};
+
+const saveCompletedDates = () => {
+  const completedDates = getValidCompletedDates(Array.from(calendarState.completedDates));
+  calendarState.completedDates = new Set(completedDates);
+  localStorage.setItem(STORAGE_KEYS.completedDates, JSON.stringify(completedDates));
+  saveLastUpdated();
+};
+
+const selectCalendarDate = (dateKey) => {
+  calendarState.selectedDateKey = dateKey;
+  renderCalendar();
+};
+
+const toggleDateCompletion = (dateKey) => {
+  if (!dateKey || isFutureDateKey(dateKey)) return;
+
+  if (calendarState.completedDates.has(dateKey)) {
+    calendarState.completedDates.delete(dateKey);
+  } else {
+    calendarState.completedDates.add(dateKey);
+  }
+
+  saveCompletedDates();
+  renderCalendar();
+};
+
+const markTodayComplete = () => {
+  const todayKey = formatDateKey(new Date());
+  calendarState.completedDates.add(todayKey);
+  calendarState.selectedDateKey = todayKey;
+  saveCompletedDates();
+  renderCalendar();
+};
+
+const renderSelectedDay = () => {
+  const selectedDate = document.getElementById("selected-calendar-date");
+  const toggleButton = document.getElementById("toggle-selected-complete");
+  const dateKey = calendarState.selectedDateKey;
+
+  if (selectedDate) {
+    selectedDate.textContent = dateKey ? formatDisplayDate(dateKey) : "Select a date";
+  }
+
+  if (!toggleButton) return;
+
+  const isFutureDate = dateKey ? isFutureDateKey(dateKey) : false;
+  const isCompleted = dateKey ? calendarState.completedDates.has(dateKey) : false;
+
+  toggleButton.disabled = !dateKey || isFutureDate;
+  toggleButton.textContent = isCompleted ? "Unmark Complete" : "Mark Complete";
+};
+
+const renderTodayCompletionButton = () => {
+  const markTodayButton = document.getElementById("mark-today-complete");
+  if (!markTodayButton) return;
+
+  const stats = getChecklistStats();
+  const todayKey = formatDateKey(new Date());
+  const isComplete = calendarState.completedDates.has(todayKey);
+  const canMarkToday = stats.total > 0 && stats.completed === stats.total && !isComplete;
+
+  markTodayButton.disabled = !canMarkToday;
+  markTodayButton.textContent = isComplete ? "Today Completed" : "Mark Today Complete";
+};
+
+const renderCalendar = () => {
+  const calendarMonth = document.getElementById("calendar-month");
+  const calendarGrid = document.getElementById("calendar-grid");
+  if (!calendarGrid) return;
+
+  const year = calendarState.visibleDate.getFullYear();
+  const month = calendarState.visibleDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = formatDateKey(new Date());
+
+  if (calendarMonth) {
+    calendarMonth.textContent = new Intl.DateTimeFormat(undefined, {
+      month: "long",
+      year: "numeric"
+    }).format(firstDay);
+  }
+
+  calendarGrid.replaceChildren();
+
+  for (let index = 0; index < firstDay.getDay(); index++) {
+    const emptyCell = document.createElement("span");
+    emptyCell.className = "calendar-day empty";
+    emptyCell.setAttribute("aria-hidden", "true");
+    calendarGrid.appendChild(emptyCell);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dateKey = formatDateKey(date);
+    const dayButton = document.createElement("button");
+    const isCompleted = calendarState.completedDates.has(dateKey);
+    const isToday = dateKey === todayKey;
+    const isSelected = dateKey === calendarState.selectedDateKey;
+
+    dayButton.type = "button";
+    dayButton.className = "calendar-day";
+    dayButton.textContent = String(day);
+    dayButton.setAttribute("aria-label", `${formatDisplayDate(dateKey)}${isCompleted ? ", completed" : ""}`);
+    dayButton.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    dayButton.classList.toggle("completed", isCompleted);
+    dayButton.classList.toggle("today", isToday);
+    dayButton.classList.toggle("selected", isSelected);
+    dayButton.classList.toggle("future", isFutureDateKey(dateKey));
+    dayButton.addEventListener("click", () => selectCalendarDate(dateKey));
+
+    calendarGrid.appendChild(dayButton);
+  }
+
+  const trailingCells = (7 - (calendarGrid.children.length % 7)) % 7;
+  for (let index = 0; index < trailingCells; index++) {
+    const emptyCell = document.createElement("span");
+    emptyCell.className = "calendar-day empty";
+    emptyCell.setAttribute("aria-hidden", "true");
+    calendarGrid.appendChild(emptyCell);
+  }
+
+  renderSelectedDay();
+  renderTodayCompletionButton();
+};
+
+const setupCalendar = () => {
+  calendarState.completedDates = new Set(readStoredCompletedDates());
+  calendarState.selectedDateKey = formatDateKey(new Date());
+  renderCalendar();
+
+  document.getElementById("calendar-prev")?.addEventListener("click", () => {
+    calendarState.visibleDate = new Date(
+      calendarState.visibleDate.getFullYear(),
+      calendarState.visibleDate.getMonth() - 1,
+      1
+    );
+    renderCalendar();
+  });
+
+  document.getElementById("calendar-next")?.addEventListener("click", () => {
+    calendarState.visibleDate = new Date(
+      calendarState.visibleDate.getFullYear(),
+      calendarState.visibleDate.getMonth() + 1,
+      1
+    );
+    renderCalendar();
+  });
+
+  document.getElementById("mark-today-complete")?.addEventListener("click", markTodayComplete);
+  document.getElementById("toggle-selected-complete")?.addEventListener("click", () => {
+    toggleDateCompletion(calendarState.selectedDateKey);
+  });
 };
 
 const saveChecklist = () => {
@@ -334,9 +596,7 @@ const saveChecklist = () => {
 };
 
 const updateProgress = () => {
-  const checkboxes = getCheckboxes();
-  const completed = checkboxes.filter((checkbox) => checkbox.checked).length;
-  const total = checkboxes.length;
+  const { checkboxes, completed, total } = getChecklistStats();
   const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   document.getElementById("completed-count").textContent = String(completed);
@@ -346,6 +606,8 @@ const updateProgress = () => {
   checkboxes.forEach((checkbox) => {
     checkbox.closest(".check-item")?.classList.toggle("completed", checkbox.checked);
   });
+
+  renderTodayCompletionButton();
 };
 
 const restoreChecklist = () => {
@@ -356,9 +618,47 @@ const restoreChecklist = () => {
   updateProgress();
 };
 
-const playBeep = (frequency = 800, duration = 0.15) => {
+const readStoredVoiceCuePreference = () => {
+  const storedValue = localStorage.getItem(STORAGE_KEYS.voiceCuesEnabled);
+  if (storedValue === null) return true;
+  return storedValue === "true";
+};
+
+const saveVoiceCuePreference = () => {
+  localStorage.setItem(STORAGE_KEYS.voiceCuesEnabled, String(audioCueState.isEnabled));
+};
+
+const getAudioContext = () => {
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextConstructor) return null;
+
+  if (!audioCueState.audioContext) {
+    audioCueState.audioContext = new AudioContextConstructor();
+  }
+
+  return audioCueState.audioContext;
+};
+
+const unlockAudioCues = () => {
+  if (!audioCueState.isEnabled) return;
+
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = getAudioContext();
+    if (audioContext?.state === "suspended") {
+      audioContext.resume();
+    }
+  } catch (error) {
+    console.warn("Audio cue unlock failed", error);
+  }
+};
+
+const playCueBeep = (frequency = 800, duration = 0.15) => {
+  if (!audioCueState.isEnabled) return;
+
+  try {
+    const audioCtx = getAudioContext();
+    if (!audioCtx) return;
+
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
 
@@ -373,8 +673,78 @@ const playBeep = (frequency = 800, duration = 0.15) => {
     oscillator.start(audioCtx.currentTime);
     oscillator.stop(audioCtx.currentTime + duration);
   } catch (error) {
-    console.warn("AudioContext beep failed", error);
+    console.warn("Audio cue beep failed", error);
   }
+};
+
+const speakCue = (message) => {
+  if (!audioCueState.isEnabled || !("speechSynthesis" in window)) return;
+
+  try {
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.warn("Voice cue failed", error);
+  }
+};
+
+const playAudioCue = (message, frequency = 800, duration = 0.15) => {
+  if (!audioCueState.isEnabled) return;
+
+  unlockAudioCues();
+  speakCue(message);
+  playCueBeep(frequency, duration);
+};
+
+const getWorkCueMessage = (setId) => {
+  if (setId.startsWith("wall") || setId.startsWith("slr")) return "Hold";
+  return "";
+};
+
+const getRestCueMessage = (setId) => setId.startsWith("wall") ? "Resting" : "Relax";
+
+const playCurrentPhaseCue = (setId) => {
+  const state = getSetRowState(setId);
+  if (!state || state.isDone) return;
+
+  if (state.repState === "work") {
+    const message = getWorkCueMessage(setId);
+    if (message) playAudioCue(message, 800, 0.2);
+    return;
+  }
+
+  if (state.repState === "rest") {
+    playAudioCue(getRestCueMessage(setId), 600, 0.18);
+  }
+};
+
+const renderVoiceCueControl = () => {
+  const toggle = document.getElementById("voice-cues-toggle");
+  const status = document.getElementById("voice-cues-status");
+
+  if (toggle) toggle.checked = audioCueState.isEnabled;
+  if (status) status.textContent = audioCueState.isEnabled ? "Voice cues on" : "Voice cues off";
+};
+
+const setupVoiceCues = () => {
+  audioCueState.isEnabled = readStoredVoiceCuePreference();
+  renderVoiceCueControl();
+
+  document.getElementById("voice-cues-toggle")?.addEventListener("change", (event) => {
+    audioCueState.isEnabled = event.target.checked;
+    saveVoiceCuePreference();
+    renderVoiceCueControl();
+
+    if (audioCueState.isEnabled) {
+      playAudioCue("Voice cues on", 880, 0.12);
+    } else if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  });
 };
 
 const triggerVisualFlash = (element) => {
@@ -397,28 +767,28 @@ const handleRepLoopTick = (setId) => {
     const rowEl = getSetRowElement(setId);
     
     if (state.repState === "work") {
-      playBeep(800, 0.25);
       triggerVisualFlash(rowEl);
 
       if (state.currentRep < state.totalReps) {
         state.repState = "rest";
         state.timeRemainingSec = state.restDurationSec;
+        playAudioCue(getRestCueMessage(setId), 600, 0.2);
       } else {
         state.isRunning = false;
         state.isDone = true;
         state.currentRep = state.totalReps;
         state.repState = "completed";
         state.timeRemainingSec = 0;
-        playBeep(1200, 0.6);
+        playAudioCue("Set complete", 1200, 0.6);
         setRowDone(setId, true);
       }
     } else if (state.repState === "rest") {
-      playBeep(600, 0.2);
       triggerVisualFlash(rowEl);
 
       state.currentRep++;
       state.repState = "work";
       state.timeRemainingSec = state.workDurationSec;
+      playCurrentPhaseCue(setId);
     }
   }
 
@@ -543,10 +913,12 @@ const toggleSetRowTimer = (setId) => {
     pauseOtherSetRows(setId);
     if (rowState.isRepLoop) {
       rowState.isRunning = true;
+      playCurrentPhaseCue(setId);
     } else {
       rowState.elapsedMs = normalizeElapsedMs(rowState.elapsedMs);
       rowState.startedAt = Date.now();
       rowState.isRunning = true;
+      unlockAudioCues();
     }
   }
 
@@ -688,8 +1060,10 @@ const setupSessionMeta = () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   setupSessionMeta();
+  setupCalendar();
   restoreChecklist();
   setupChecklistListeners();
+  setupVoiceCues();
   setupNotes();
   setupReset();
   setupTimer();
