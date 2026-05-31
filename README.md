@@ -47,7 +47,7 @@ Open: <http://localhost:8000/>
 ## Notes
 
 - No backend is required.
-- Checklist progress and notes are saved only in the current browser using `localStorage`.
+- Checklist progress, notes, and local session history are saved only in the current browser using `localStorage`.
 - The tracker includes a persistent session timer with start, pause, resume, and reset controls stored locally in the browser.
 - Wall Sit and Straight Leg Raise include workout-style set rows with per-set timers saved locally in the browser.
 - This tracker follows an existing rehab plan and does not replace medical advice.

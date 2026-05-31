@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Daily knee home rehabilitation session tracker with exercise checklist, progress, safety checks, and notes." />
   <title>Knee Rehab Session Tracker</title>
+  <link rel="icon" href="data:," />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -48,6 +49,29 @@
         <div class="progress-track" aria-hidden="true">
           <div id="progress-fill" class="progress-fill"></div>
         </div>
+
+        <div class="exercise-progress" aria-labelledby="exercise-progress-heading">
+          <div class="exercise-progress-header">
+            <h3 id="exercise-progress-heading">Exercise Progress</h3>
+            <span class="meta-label">Sets and technique checks</span>
+          </div>
+
+          <div class="exercise-progress-list" aria-live="polite">
+            <div class="exercise-progress-row" data-exercise-progress="wall">
+              <strong>Wall Sit</strong>
+              <span><span id="wall-progress-sets">0 / 2</span> sets</span>
+              <span><span id="wall-progress-checks">0 / 5</span> checks</span>
+              <span id="wall-progress-status" class="status-badge">Not started</span>
+            </div>
+
+            <div class="exercise-progress-row" data-exercise-progress="slr">
+              <strong>Straight Leg Raise</strong>
+              <span><span id="slr-progress-sets">0 / 3</span> sets</span>
+              <span><span id="slr-progress-checks">0 / 6</span> checks</span>
+              <span id="slr-progress-status" class="status-badge">Not started</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="calendar-card" aria-labelledby="calendar-heading">
@@ -80,6 +104,7 @@
             <span class="meta-label">Selected day</span>
             <strong id="selected-calendar-date">Select a date</strong>
             <button type="button" id="toggle-selected-complete" class="button secondary-button" disabled>Mark Complete</button>
+            <div id="session-history-panel" class="session-history-panel"></div>
           </div>
         </div>
       </section>

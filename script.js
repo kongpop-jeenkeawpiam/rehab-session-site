@@ -22,6 +22,7 @@ const STORAGE_KEYS = {
   timer: "kneeRehabTimerState",
   sets: "kneeRehabSetRowState",
   completedDates: "kneeRehabCompletedDates",
+  sessionHistory: "kneeRehabSessionHistory",
   voiceCuesEnabled: "kneeRehabVoiceCuesEnabled"
 };
 
@@ -68,6 +69,34 @@ const exerciseSetTrackers = [
   }
 ];
 
+const exerciseProgressGroups = [
+  {
+    id: "wall",
+    label: "Wall Sit",
+    setIds: ["wall-1", "wall-2"],
+    checkIds: [
+      "wall-setup",
+      "wall-angle",
+      "wall-foot-position",
+      "wall-data-check",
+      "wall-safety-check"
+    ]
+  },
+  {
+    id: "slr",
+    label: "Straight Leg Raise",
+    setIds: ["slr-1", "slr-2", "slr-3"],
+    checkIds: [
+      "slr-setup",
+      "slr-lock-twist",
+      "slr-tempo-lift",
+      "slr-tempo-hold",
+      "slr-tempo-lower",
+      "slr-data-check"
+    ]
+  }
+];
+
 let setRowIntervalId = null;
 
 const today = new Date();
@@ -75,7 +104,8 @@ const today = new Date();
 const calendarState = {
   visibleDate: new Date(today.getFullYear(), today.getMonth(), 1),
   selectedDateKey: null,
-  completedDates: new Set()
+  completedDates: new Set(),
+  sessionHistory: {}
 };
 
 const setRowState = {
@@ -185,6 +215,58 @@ const getCompletedSetCount = (tracker) => tracker.sets
   .filter((set) => getSetRowState(set.id)?.isDone)
   .length;
 
+const getCompletedCheckCount = (checkIds) => checkIds
+  .filter((checkId) => document.getElementById(checkId)?.checked)
+  .length;
+
+const getExerciseProgressStats = (group) => {
+  const completedSets = group.setIds
+    .filter((setId) => getSetRowState(setId)?.isDone)
+    .length;
+  const completedChecks = getCompletedCheckCount(group.checkIds);
+  const totalSets = group.setIds.length;
+  const totalChecks = group.checkIds.length;
+  const isFinished = completedSets === totalSets && completedChecks === totalChecks;
+  const hasStarted = completedSets > 0 || completedChecks > 0;
+
+  return {
+    completedSets: completedSets,
+    completedChecks: completedChecks,
+    totalSets: totalSets,
+    totalChecks: totalChecks,
+    status: isFinished ? "Finished" : hasStarted ? "In progress" : "Not started",
+    statusClass: isFinished ? "finished" : hasStarted ? "in-progress" : "not-started",
+    isFinished: isFinished
+  };
+};
+
+const hasFinishedExercise = () => exerciseProgressGroups
+  .some((group) => getExerciseProgressStats(group).isFinished);
+
+const hasCompletedImmediateSafetyCheck = () => document.getElementById("monitor-immediate")?.checked === true;
+
+const canCompleteToday = () => hasFinishedExercise() && hasCompletedImmediateSafetyCheck();
+
+const renderExerciseProgress = () => {
+  exerciseProgressGroups.forEach((group) => {
+    const stats = getExerciseProgressStats(group);
+    const row = document.querySelector(`[data-exercise-progress="${group.id}"]`);
+    const sets = document.getElementById(`${group.id}-progress-sets`);
+    const checks = document.getElementById(`${group.id}-progress-checks`);
+    const status = document.getElementById(`${group.id}-progress-status`);
+
+    if (sets) sets.textContent = `${stats.completedSets} / ${stats.totalSets}`;
+    if (checks) checks.textContent = `${stats.completedChecks} / ${stats.totalChecks}`;
+    if (status) status.textContent = stats.status;
+
+    if (row) {
+      row.classList.toggle("finished", stats.statusClass === "finished");
+      row.classList.toggle("in-progress", stats.statusClass === "in-progress");
+      row.classList.toggle("not-started", stats.statusClass === "not-started");
+    }
+  });
+};
+
 const readStoredTimer = () => {
   try {
     const storedValue = localStorage.getItem(STORAGE_KEYS.timer);
@@ -264,6 +346,7 @@ const saveSetRows = () => {
   });
 
   localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(state));
+  saveTodaySessionHistory();
 };
 
 const restoreSetRows = () => {
@@ -432,11 +515,222 @@ const readStoredCompletedDates = () => {
   }
 };
 
+const readStoredSessionHistory = () => {
+  try {
+    const storedValue = localStorage.getItem(STORAGE_KEYS.sessionHistory);
+    if (storedValue === null) return {};
+
+    const storedHistory = JSON.parse(storedValue);
+    if (!storedHistory || typeof storedHistory !== "object" || Array.isArray(storedHistory)) {
+      localStorage.removeItem(STORAGE_KEYS.sessionHistory);
+      return {};
+    }
+
+    return Object.entries(storedHistory).reduce((history, [dateKey, record]) => {
+      if (createDateFromKey(dateKey) && record && typeof record === "object" && !Array.isArray(record)) {
+        history[dateKey] = record;
+      }
+      return history;
+    }, {});
+  } catch (error) {
+    console.warn("Could not parse session history. Resetting detailed history.", error);
+    localStorage.removeItem(STORAGE_KEYS.sessionHistory);
+    return {};
+  }
+};
+
+const writeSessionHistory = () => {
+  localStorage.setItem(STORAGE_KEYS.sessionHistory, JSON.stringify(calendarState.sessionHistory));
+};
+
+const syncCompletedDatesWithHistory = () => {
+  Object.entries(calendarState.sessionHistory).forEach(([dateKey, record]) => {
+    if (record?.completed === true) {
+      calendarState.completedDates.add(dateKey);
+    } else if (record?.completed === false) {
+      calendarState.completedDates.delete(dateKey);
+    }
+  });
+  localStorage.setItem(
+    STORAGE_KEYS.completedDates,
+    JSON.stringify(getValidCompletedDates(Array.from(calendarState.completedDates)))
+  );
+};
+
 const saveCompletedDates = () => {
   const completedDates = getValidCompletedDates(Array.from(calendarState.completedDates));
   calendarState.completedDates = new Set(completedDates);
   localStorage.setItem(STORAGE_KEYS.completedDates, JSON.stringify(completedDates));
   saveLastUpdated();
+};
+
+const getCurrentNotes = () => document.getElementById("session-notes")?.value || "";
+
+const getMonitoringHistorySnapshot = () => ({
+  immediate: document.getElementById("monitor-immediate")?.checked === true,
+  nextMorning: document.getElementById("monitor-next-morning")?.checked === true,
+  walking: document.getElementById("monitor-walking")?.checked === true
+});
+
+const getExerciseHistorySnapshot = () => exerciseProgressGroups.reduce((exercises, group) => {
+  const stats = getExerciseProgressStats(group);
+
+  exercises[group.id] = {
+    label: group.label,
+    status: stats.status,
+    completedSets: stats.completedSets,
+    totalSets: stats.totalSets,
+    completedChecks: stats.completedChecks,
+    totalChecks: stats.totalChecks
+  };
+
+  return exercises;
+}, {});
+
+const createCurrentSessionHistoryRecord = (dateKey, options = {}) => {
+  const existingRecord = calendarState.sessionHistory[dateKey] || {};
+  const completed = options.completed ?? existingRecord.completed ?? calendarState.completedDates.has(dateKey);
+  const manualCompletion = options.manualCompletion ?? existingRecord.manualCompletion ?? false;
+
+  return {
+    dateKey: dateKey,
+    completed: Boolean(completed),
+    manualCompletion: Boolean(manualCompletion),
+    updatedAt: new Date().toISOString(),
+    exercises: getExerciseHistorySnapshot(),
+    monitoring: getMonitoringHistorySnapshot(),
+    notes: getCurrentNotes()
+  };
+};
+
+const createMinimalSessionHistoryRecord = (dateKey, completed) => {
+  const existingRecord = calendarState.sessionHistory[dateKey] || {};
+
+  return {
+    dateKey: dateKey,
+    completed: Boolean(completed),
+    manualCompletion: true,
+    updatedAt: new Date().toISOString(),
+    exercises: existingRecord.exercises || {},
+    monitoring: existingRecord.monitoring || {},
+    notes: existingRecord.notes || ""
+  };
+};
+
+const saveTodaySessionHistory = (options = {}) => {
+  const todayKey = formatDateKey(new Date());
+  calendarState.sessionHistory[todayKey] = createCurrentSessionHistoryRecord(todayKey, options);
+  writeSessionHistory();
+};
+
+const saveSelectedDateCompletionHistory = (dateKey, completed) => {
+  if (!dateKey) return;
+
+  const todayKey = formatDateKey(new Date());
+  calendarState.sessionHistory[dateKey] = dateKey === todayKey
+    ? createCurrentSessionHistoryRecord(dateKey, { completed: completed, manualCompletion: true })
+    : createMinimalSessionHistoryRecord(dateKey, completed);
+  writeSessionHistory();
+};
+
+const createHistoryText = (text, className) => {
+  const element = document.createElement("p");
+  element.className = className;
+  element.textContent = text;
+  return element;
+};
+
+const renderExerciseHistory = (container, exercises) => {
+  const list = document.createElement("div");
+  list.className = "history-exercise-list";
+
+  exerciseProgressGroups.forEach((group) => {
+    const exercise = exercises?.[group.id];
+    const row = document.createElement("div");
+    row.className = "history-exercise-row";
+
+    const name = document.createElement("strong");
+    name.textContent = group.label;
+
+    const details = document.createElement("span");
+    details.textContent = exercise
+      ? `${exercise.completedSets || 0} / ${exercise.totalSets || group.setIds.length} sets, ${exercise.completedChecks || 0} / ${exercise.totalChecks || group.checkIds.length} checks`
+      : "No detail saved";
+
+    const status = document.createElement("span");
+    status.className = "history-status-badge";
+    status.textContent = exercise?.status || "No detail";
+    status.classList.add(
+      exercise?.status === "Finished" ? "finished" : exercise?.status === "In progress" ? "in-progress" : "not-started"
+    );
+
+    row.append(name, details, status);
+    list.appendChild(row);
+  });
+
+  container.appendChild(list);
+};
+
+const renderMonitoringHistory = (container, monitoring) => {
+  const monitoringItems = [
+    ["Immediate", monitoring?.immediate],
+    ["Next morning", monitoring?.nextMorning],
+    ["Walking", monitoring?.walking]
+  ];
+  const completedCount = monitoringItems.filter((item) => item[1] === true).length;
+  const summary = createHistoryText(`Monitoring: ${completedCount} / ${monitoringItems.length} complete`, "history-summary");
+  const list = document.createElement("ul");
+  list.className = "history-monitoring-list";
+
+  monitoringItems.forEach(([label, isComplete]) => {
+    const item = document.createElement("li");
+    item.textContent = `${label}: ${isComplete ? "Done" : "Not done"}`;
+    list.appendChild(item);
+  });
+
+  container.append(summary, list);
+};
+
+const renderSessionHistory = () => {
+  const panel = document.getElementById("session-history-panel");
+  if (!panel) return;
+
+  const dateKey = calendarState.selectedDateKey;
+  panel.replaceChildren();
+
+  const heading = document.createElement("h3");
+  heading.textContent = "Session History";
+  panel.appendChild(heading);
+
+  if (!dateKey) {
+    panel.appendChild(createHistoryText("Select a date to see saved progress.", "history-empty"));
+    return;
+  }
+
+  const record = calendarState.sessionHistory[dateKey];
+  if (!record) {
+    const message = calendarState.completedDates.has(dateKey)
+      ? "Completed, no detailed session saved."
+      : "No session recorded.";
+    panel.appendChild(createHistoryText(message, "history-empty"));
+    return;
+  }
+
+  const completionText = record.completed ? "Completed" : "Not completed";
+  const updatedText = record.updatedAt ? formatDateTime(record.updatedAt) : "No update time saved";
+  panel.appendChild(createHistoryText(`${completionText} • Updated ${updatedText}`, "history-summary"));
+
+  renderExerciseHistory(panel, record.exercises);
+  renderMonitoringHistory(panel, record.monitoring);
+
+  const notes = document.createElement("div");
+  notes.className = "history-notes";
+  const notesLabel = document.createElement("strong");
+  notesLabel.textContent = "Notes";
+  const notesText = document.createElement("p");
+  notesText.textContent = record.notes?.trim() || "No notes saved.";
+  notes.append(notesLabel, notesText);
+  panel.appendChild(notes);
 };
 
 const selectCalendarDate = (dateKey) => {
@@ -447,12 +741,15 @@ const selectCalendarDate = (dateKey) => {
 const toggleDateCompletion = (dateKey) => {
   if (!dateKey || isFutureDateKey(dateKey)) return;
 
+  let isCompleted = false;
   if (calendarState.completedDates.has(dateKey)) {
     calendarState.completedDates.delete(dateKey);
   } else {
     calendarState.completedDates.add(dateKey);
+    isCompleted = true;
   }
 
+  saveSelectedDateCompletionHistory(dateKey, isCompleted);
   saveCompletedDates();
   renderCalendar();
 };
@@ -461,6 +758,7 @@ const markTodayComplete = () => {
   const todayKey = formatDateKey(new Date());
   calendarState.completedDates.add(todayKey);
   calendarState.selectedDateKey = todayKey;
+  saveTodaySessionHistory({ completed: true, manualCompletion: true });
   saveCompletedDates();
   renderCalendar();
 };
@@ -481,16 +779,16 @@ const renderSelectedDay = () => {
 
   toggleButton.disabled = !dateKey || isFutureDate;
   toggleButton.textContent = isCompleted ? "Unmark Complete" : "Mark Complete";
+  renderSessionHistory();
 };
 
 const renderTodayCompletionButton = () => {
   const markTodayButton = document.getElementById("mark-today-complete");
   if (!markTodayButton) return;
 
-  const stats = getChecklistStats();
   const todayKey = formatDateKey(new Date());
   const isComplete = calendarState.completedDates.has(todayKey);
-  const canMarkToday = stats.total > 0 && stats.completed === stats.total && !isComplete;
+  const canMarkToday = canCompleteToday() && !isComplete;
 
   markTodayButton.disabled = !canMarkToday;
   markTodayButton.textContent = isComplete ? "Today Completed" : "Mark Today Complete";
@@ -558,7 +856,9 @@ const renderCalendar = () => {
 };
 
 const setupCalendar = () => {
+  calendarState.sessionHistory = readStoredSessionHistory();
   calendarState.completedDates = new Set(readStoredCompletedDates());
+  syncCompletedDatesWithHistory();
   calendarState.selectedDateKey = formatDateKey(new Date());
   renderCalendar();
 
@@ -592,6 +892,7 @@ const saveChecklist = () => {
     state[checkbox.id] = checkbox.checked;
   });
   localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(state));
+  saveTodaySessionHistory();
   saveLastUpdated();
 };
 
@@ -607,7 +908,9 @@ const updateProgress = () => {
     checkbox.closest(".check-item")?.classList.toggle("completed", checkbox.checked);
   });
 
+  renderExerciseProgress();
   renderTodayCompletionButton();
+  renderSessionHistory();
 };
 
 const restoreChecklist = () => {
@@ -867,6 +1170,9 @@ const renderExerciseSetTracker = (tracker) => {
 
 const renderSetRows = () => {
   exerciseSetTrackers.forEach(renderExerciseSetTracker);
+  renderExerciseProgress();
+  renderTodayCompletionButton();
+  renderSessionHistory();
 };
 
 const ensureSetRowInterval = () => {
@@ -1010,6 +1316,8 @@ const setupNotes = () => {
 
   notes.addEventListener("input", () => {
     localStorage.setItem(STORAGE_KEYS.notes, notes.value);
+    saveTodaySessionHistory();
+    renderSessionHistory();
     saveLastUpdated();
   });
 
@@ -1018,6 +1326,8 @@ const setupNotes = () => {
     if (!shouldClear) return;
     notes.value = "";
     localStorage.removeItem(STORAGE_KEYS.notes);
+    saveTodaySessionHistory();
+    renderSessionHistory();
     saveLastUpdated();
   });
 };
@@ -1031,8 +1341,10 @@ const setupReset = () => {
       checkbox.checked = false;
     });
     localStorage.removeItem(STORAGE_KEYS.checklist);
-    saveLastUpdated();
     updateProgress();
+    saveTodaySessionHistory();
+    renderSessionHistory();
+    saveLastUpdated();
   });
 };
 
