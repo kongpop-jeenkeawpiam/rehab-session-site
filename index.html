@@ -44,7 +44,7 @@
       <section class="progress-card" aria-labelledby="progress-heading">
         <div class="progress-heading-row">
           <h2 id="progress-heading">Progress</h2>
-          <p id="progress-text" aria-live="polite">Progress: <span id="completed-count">0</span> / <span id="total-count">14</span> completed</p>
+          <p id="progress-text" aria-live="polite">Progress: <span id="completed-count">0</span> / <span id="total-count">22</span> completed</p>
         </div>
         <div class="progress-track" aria-hidden="true">
           <div id="progress-fill" class="progress-fill"></div>
@@ -69,6 +69,20 @@
               <span><span id="slr-progress-sets">0 / 3</span> sets</span>
               <span><span id="slr-progress-checks">0 / 6</span> checks</span>
               <span id="slr-progress-status" class="status-badge">Not started</span>
+            </div>
+
+            <div class="exercise-progress-row" data-exercise-progress="bridge">
+              <strong>Glute Bridges</strong>
+              <span><span id="bridge-progress-sets">0 / 2</span> sets</span>
+              <span><span id="bridge-progress-checks">0 / 4</span> checks</span>
+              <span id="bridge-progress-status" class="status-badge">Not started</span>
+            </div>
+
+            <div class="exercise-progress-row" data-exercise-progress="clam">
+              <strong>Clamshells</strong>
+              <span><span id="clam-progress-sets">0 / 2</span> sets</span>
+              <span><span id="clam-progress-checks">0 / 4</span> checks</span>
+              <span id="clam-progress-status" class="status-badge">Not started</span>
             </div>
           </div>
         </div>
@@ -153,6 +167,42 @@
               <div>
                 <dt>Primary Focus</dt>
                 <dd>Turn toes out 15° to activate the inner thigh muscle (<strong>VMO</strong>).</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="exercise-summary">
+            <h3>3. Glute Bridges</h3>
+            <dl>
+              <div>
+                <dt>Volume / Dosage</dt>
+                <dd>15 reps <br><strong>Total: 2 Sets</strong></dd>
+              </div>
+              <div>
+                <dt>Recommended Timing</dt>
+                <dd>After Wall Sit or before bed</dd>
+              </div>
+              <div>
+                <dt>Primary Focus</dt>
+                <dd>Squeeze glutes to lift the hips without arching the lower back.</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="exercise-summary">
+            <h3>4. Clamshells</h3>
+            <dl>
+              <div>
+                <dt>Volume / Dosage</dt>
+                <dd>15 reps per side <br><strong>Total: 2 Sets</strong></dd>
+              </div>
+              <div>
+                <dt>Recommended Timing</dt>
+                <dd>After Glute Bridges or while relaxing</dd>
+              </div>
+              <div>
+                <dt>Primary Focus</dt>
+                <dd>Keep hips stacked and move from the outside hip without rolling backward.</dd>
               </div>
             </dl>
           </article>
@@ -300,6 +350,128 @@
           <div class="check-item">
             <input type="checkbox" id="slr-data-check" data-checklist-item />
             <label for="slr-data-check"><strong>Data Check:</strong> Feel a distinct contraction/burn in the inner thigh muscle (VMO), located just above the inner side of your kneecap.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-green" aria-labelledby="bridge-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">🟢</span>
+          <div>
+            <h2 id="bridge-heading">Exercise 3: Glute Bridges</h2>
+            <p>Hip drive and glute activation</p>
+          </div>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="bridge" role="group" aria-labelledby="bridge-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="bridge-set-heading">Glute Bridge Sets</h3>
+              <p><span id="bridge-set-count">0</span> / <span id="bridge-set-total">2</span> sets</p>
+            </div>
+            <button type="button" id="bridge-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="bridge-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="bridge-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="bridge-1-toggle" class="set-play-button" aria-label="Start Glute Bridges set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="bridge-1-done" aria-label="Glute Bridges set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="bridge-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="bridge-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="bridge-2-toggle" class="set-play-button" aria-label="Start Glute Bridges set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="bridge-2-done" aria-label="Glute Bridges set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="checklist" data-section="Glute Bridges">
+          <div class="check-item">
+            <input type="checkbox" id="bridge-setup" data-checklist-item />
+            <label for="bridge-setup"><strong>Setup:</strong> Lie on your back with knees bent, feet flat, and feet hip-width apart.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="bridge-core" data-checklist-item />
+            <label for="bridge-core"><strong>Core:</strong> Lightly brace your abdomen so the lower back does not arch as you lift.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="bridge-lift" data-checklist-item />
+            <label for="bridge-lift"><strong>Lift:</strong> Press through both heels and squeeze your glutes until hips line up with shoulders and knees.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="bridge-safety-check" data-checklist-item />
+            <label for="bridge-safety-check"><strong>Safety Check:</strong> Stop if you feel sharp knee pain, hamstring cramping that does not settle, or low-back pinching.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-blue" aria-labelledby="clam-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">🔵</span>
+          <div>
+            <h2 id="clam-heading">Exercise 4: Clamshells</h2>
+            <p>Outer hip control and knee alignment</p>
+          </div>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="clam" role="group" aria-labelledby="clam-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="clam-set-heading">Clamshell Sets</h3>
+              <p><span id="clam-set-count">0</span> / <span id="clam-set-total">2</span> sets</p>
+            </div>
+            <button type="button" id="clam-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="clam-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="clam-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="clam-1-toggle" class="set-play-button" aria-label="Start Clamshells set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="clam-1-done" aria-label="Clamshells set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="clam-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="clam-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">15 reps</span>
+            <button type="button" id="clam-2-toggle" class="set-play-button" aria-label="Start Clamshells set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="clam-2-done" aria-label="Clamshells set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="checklist" data-section="Clamshells">
+          <div class="check-item">
+            <input type="checkbox" id="clam-setup" data-checklist-item />
+            <label for="clam-setup"><strong>Setup:</strong> Lie on your side with knees bent, feet together, and hips stacked.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="clam-hip-stack" data-checklist-item />
+            <label for="clam-hip-stack"><strong>Hip Stack:</strong> Keep your pelvis still and avoid rolling your top hip backward.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="clam-control" data-checklist-item />
+            <label for="clam-control"><strong>Control:</strong> Lift the top knee slowly, pause briefly, then lower with control while feet stay together.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="clam-safety-check" data-checklist-item />
+            <label for="clam-safety-check"><strong>Safety Check:</strong> Stop if the knee twists, pinches, or feels unstable during the movement.</label>
           </div>
         </div>
       </section>
