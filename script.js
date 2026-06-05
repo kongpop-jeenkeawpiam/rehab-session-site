@@ -10,6 +10,14 @@ const checklistItems = [
   "slr-tempo-hold",
   "slr-tempo-lower",
   "slr-data-check",
+  "bridge-setup",
+  "bridge-core",
+  "bridge-lift",
+  "bridge-safety-check",
+  "clam-setup",
+  "clam-hip-stack",
+  "clam-control",
+  "clam-safety-check",
   "monitor-immediate",
   "monitor-next-morning",
   "monitor-walking"
@@ -47,6 +55,18 @@ const audioCueState = {
   audioContext: null
 };
 
+const SET_ROW_CONFIG = {
+  wall: { totalReps: 10, workDurationSec: 30, restDurationSec: 15, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Rep" },
+  slr: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Hold", restCue: "Relax", activeTargetPrefix: "HOLD! - Rep" },
+  bridge: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
+  clam: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Open", restCue: "Relax", activeTargetPrefix: "Rep" }
+};
+
+const getSetRowConfig = (setId) => {
+  const trackerId = setId.split("-")[0];
+  return SET_ROW_CONFIG[trackerId] || SET_ROW_CONFIG.slr;
+};
+
 const exerciseSetTrackers = [
   {
     id: "wall",
@@ -65,6 +85,24 @@ const exerciseSetTrackers = [
       { id: "slr-1", target: "15 reps" },
       { id: "slr-2", target: "15 reps" },
       { id: "slr-3", target: "15 reps" }
+    ]
+  },
+  {
+    id: "bridge",
+    label: "Glute Bridges",
+    totalSets: 2,
+    sets: [
+      { id: "bridge-1", target: "15 reps" },
+      { id: "bridge-2", target: "15 reps" }
+    ]
+  },
+  {
+    id: "clam",
+    label: "Clamshells",
+    totalSets: 2,
+    sets: [
+      { id: "clam-1", target: "15 reps" },
+      { id: "clam-2", target: "15 reps" }
     ]
   }
 ];
@@ -94,6 +132,28 @@ const exerciseProgressGroups = [
       "slr-tempo-lower",
       "slr-data-check"
     ]
+  },
+  {
+    id: "bridge",
+    label: "Glute Bridges",
+    setIds: ["bridge-1", "bridge-2"],
+    checkIds: [
+      "bridge-setup",
+      "bridge-core",
+      "bridge-lift",
+      "bridge-safety-check"
+    ]
+  },
+  {
+    id: "clam",
+    label: "Clamshells",
+    setIds: ["clam-1", "clam-2"],
+    checkIds: [
+      "clam-setup",
+      "clam-hip-stack",
+      "clam-control",
+      "clam-safety-check"
+    ]
   }
 ];
 
@@ -113,7 +173,11 @@ const setRowState = {
   "wall-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
   "slr-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
   "slr-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "slr-3": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 }
+  "slr-3": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
+  "bridge-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
+  "bridge-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
+  "clam-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
+  "clam-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 }
 };
 
 const formatDateTime = (value) => {
@@ -356,10 +420,10 @@ const restoreSetRows = () => {
     const storedState = storedRows[set.id];
     const startedAt = Number(storedState?.startedAt);
     const isRepLoop = true;
-    const isWallSit = set.id.startsWith("wall");
-    const totalReps = isWallSit ? 10 : 15;
-    const workDurationSec = isWallSit ? 30 : 5;
-    const restDurationSec = isWallSit ? 15 : 3;
+    const config = getSetRowConfig(set.id);
+    const totalReps = config.totalReps;
+    const workDurationSec = config.workDurationSec;
+    const restDurationSec = config.restDurationSec;
 
     setRowState[set.id].elapsedMs = normalizeElapsedMs(storedState?.elapsedMs);
     setRowState[set.id].startedAt = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
@@ -1003,12 +1067,9 @@ const playAudioCue = (message, frequency = 800, duration = 0.15) => {
   playCueBeep(frequency, duration);
 };
 
-const getWorkCueMessage = (setId) => {
-  if (setId.startsWith("wall") || setId.startsWith("slr")) return "Hold";
-  return "";
-};
+const getWorkCueMessage = (setId) => getSetRowConfig(setId).workCue;
 
-const getRestCueMessage = (setId) => setId.startsWith("wall") ? "Resting" : "Relax";
+const getRestCueMessage = (setId) => getSetRowConfig(setId).restCue;
 
 const playCurrentPhaseCue = (setId) => {
   const state = getSetRowState(setId);
@@ -1133,15 +1194,13 @@ const renderSetRow = (set) => {
     }
 
     if (targetSpan) {
-      const isWallSit = set.id.startsWith("wall");
+      const config = getSetRowConfig(set.id);
       if (rowState.isDone) {
         targetSpan.textContent = `${rowState.totalReps} reps done`;
       } else if (rowState.repState === "work") {
-        targetSpan.textContent = isWallSit
-          ? `Rep ${rowState.currentRep}/${rowState.totalReps}`
-          : `HOLD! - Rep ${rowState.currentRep}/${rowState.totalReps}`;
+        targetSpan.textContent = `${config.activeTargetPrefix} ${rowState.currentRep}/${rowState.totalReps}`;
       } else if (rowState.repState === "rest") {
-        targetSpan.textContent = isWallSit ? "Resting..." : "Relax...";
+        targetSpan.textContent = `${config.restCue}...`;
       } else {
         targetSpan.textContent = `${rowState.totalReps} reps`;
       }
@@ -1268,10 +1327,10 @@ const resetExerciseSetRows = (trackerId) => {
   if (!shouldReset) return;
 
   tracker.sets.forEach((set) => {
-    const isWallSit = set.id.startsWith("wall");
-    const totalReps = isWallSit ? 10 : 15;
-    const workDurationSec = isWallSit ? 30 : 5;
-    const restDurationSec = isWallSit ? 15 : 3;
+    const config = getSetRowConfig(set.id);
+    const totalReps = config.totalReps;
+    const workDurationSec = config.workDurationSec;
+    const restDurationSec = config.restDurationSec;
 
     setRowState[set.id] = {
       elapsedMs: 0,
