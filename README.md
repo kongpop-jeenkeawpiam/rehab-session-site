@@ -63,6 +63,8 @@ window.KNEE_REHAB_SUPABASE_CONFIG = {
 
 The anon key is safe to ship in a static site. Privacy comes from Supabase Auth plus the row-level security policies in `supabase-schema.sql`.
 
+For the full integration contract, see [`docs/api.md`](docs/api.md).
+
 ## Notes
 
 - No custom backend is required.
