@@ -64,7 +64,7 @@ const translations = {
     "site.subtitle": "Daily home rehabilitation plan and safety checklist",
     "language.selection": "Language selection",
     "session.summary": "Session summary",
-    "session.today": "Today's session",
+    "session.today": "Selected session",
     "session.loadingDate": "Loading date...",
     "session.lastUpdated": "Last updated",
     "session.notStartedYet": "Not started yet",
@@ -242,7 +242,7 @@ const translations = {
     "site.subtitle": "แผนฟื้นฟูที่บ้านรายวันและรายการตรวจสอบความปลอดภัย",
     "language.selection": "เลือกภาษา",
     "session.summary": "สรุปเซสชัน",
-    "session.today": "เซสชันวันนี้",
+    "session.today": "เซสชันที่เลือก",
     "session.loadingDate": "กำลังโหลดวันที่...",
     "session.lastUpdated": "อัปเดตล่าสุด",
     "session.notStartedYet": "ยังไม่ได้เริ่ม",
@@ -1036,6 +1036,10 @@ const renderExerciseProgress = () => {
   });
 };
 
+const getTodayDateKey = () => formatDateKey(new Date());
+
+const getActiveDateKey = () => calendarState.selectedDateKey || getTodayDateKey();
+
 const getTimerSnapshot = (options = {}) => {
   const startedAt = Number(timerState.startedAt);
   const shouldPause = options.pause === true;
@@ -1075,7 +1079,7 @@ const readStoredTimer = () => {
 
 const saveTimer = () => {
   localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot()));
-  queueSupabaseSaveDate(formatDateKey(new Date()));
+  saveActiveSessionHistory();
 };
 
 const restoreTimer = () => {
@@ -1229,7 +1233,7 @@ const resetTimer = () => {
   timerState.isRunning = false;
   localStorage.removeItem(STORAGE_KEYS.timer);
   renderTimer();
-  queueSupabaseSaveDate(formatDateKey(new Date()));
+  saveActiveSessionHistory();
   saveLastUpdated();
 };
 
@@ -1391,6 +1395,15 @@ const getExerciseHistorySnapshot = () => exerciseProgressGroups.reduce((exercise
   return exercises;
 }, {});
 
+const getStoredNotes = () => localStorage.getItem(STORAGE_KEYS.notes) || "";
+
+const writeActiveSnapshotsToLocalStorage = () => {
+  localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(getChecklistSnapshot()));
+  localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(getSetRowsSnapshot()));
+  localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot({ pause: true })));
+  localStorage.setItem(STORAGE_KEYS.notes, getCurrentNotes());
+};
+
 const createCurrentSessionHistoryRecord = (dateKey, options = {}) => {
   const existingRecord = calendarState.sessionHistory[dateKey] || {};
   const completed = options.completed ?? existingRecord.completed ?? calendarState.completedDates.has(dateKey);
@@ -1401,6 +1414,9 @@ const createCurrentSessionHistoryRecord = (dateKey, options = {}) => {
     completed: Boolean(completed),
     manualCompletion: Boolean(manualCompletion),
     updatedAt: new Date().toISOString(),
+    checklist: getChecklistSnapshot(),
+    setRows: getSetRowsSnapshot(),
+    timer: getTimerSnapshot({ pause: true }),
     exercises: getExerciseHistorySnapshot(),
     monitoring: getMonitoringHistorySnapshot(),
     notes: getCurrentNotes()
@@ -1415,24 +1431,54 @@ const createMinimalSessionHistoryRecord = (dateKey, completed) => {
     completed: Boolean(completed),
     manualCompletion: true,
     updatedAt: new Date().toISOString(),
+    checklist: existingRecord.checklist || {},
+    setRows: existingRecord.setRows || {},
+    timer: existingRecord.timer || {},
     exercises: existingRecord.exercises || {},
     monitoring: existingRecord.monitoring || {},
     notes: existingRecord.notes || ""
   };
 };
 
-const saveTodaySessionHistory = (options = {}) => {
-  const todayKey = formatDateKey(new Date());
-  calendarState.sessionHistory[todayKey] = createCurrentSessionHistoryRecord(todayKey, options);
-  writeSessionHistory();
-  queueSupabaseSaveDate(todayKey);
+const createLegacyTodayRecord = () => {
+  const todayKey = getTodayDateKey();
+  return {
+    dateKey: todayKey,
+    completed: calendarState.completedDates.has(todayKey),
+    manualCompletion: false,
+    updatedAt: localStorage.getItem(STORAGE_KEYS.lastUpdated) || new Date().toISOString(),
+    checklist: readStoredChecklist(),
+    setRows: readStoredSetRows(),
+    timer: readStoredTimer(),
+    exercises: {},
+    monitoring: {},
+    notes: getStoredNotes()
+  };
 };
+
+const getSessionRecordForDate = (dateKey) => {
+  const record = calendarState.sessionHistory[dateKey];
+  if (record) return record;
+  return dateKey === getTodayDateKey()
+    ? createLegacyTodayRecord()
+    : createMinimalSessionHistoryRecord(dateKey, calendarState.completedDates.has(dateKey));
+};
+
+const saveActiveSessionHistory = (options = {}) => {
+  const dateKey = getActiveDateKey();
+  if (!dateKey || isFutureDateKey(dateKey)) return;
+
+  calendarState.sessionHistory[dateKey] = createCurrentSessionHistoryRecord(dateKey, options);
+  writeSessionHistory();
+  queueSupabaseSaveDate(dateKey);
+};
+
+const saveTodaySessionHistory = saveActiveSessionHistory;
 
 const saveSelectedDateCompletionHistory = (dateKey, completed) => {
   if (!dateKey) return;
 
-  const todayKey = formatDateKey(new Date());
-  calendarState.sessionHistory[dateKey] = dateKey === todayKey
+  calendarState.sessionHistory[dateKey] = dateKey === getActiveDateKey()
     ? createCurrentSessionHistoryRecord(dateKey, { completed: completed, manualCompletion: true })
     : createMinimalSessionHistoryRecord(dateKey, completed);
   writeSessionHistory();
@@ -1498,23 +1544,18 @@ const normalizeSupabaseDateKey = (value) => {
   return value.slice(0, 10);
 };
 
-const getStoredRecordForDate = (dateKey) => calendarState.sessionHistory[dateKey]
-  || (dateKey === formatDateKey(new Date())
-    ? createCurrentSessionHistoryRecord(dateKey)
-    : createMinimalSessionHistoryRecord(dateKey, calendarState.completedDates.has(dateKey)));
-
 const createSupabaseRow = (dateKey) => {
-  const record = getStoredRecordForDate(dateKey);
-  const isToday = dateKey === formatDateKey(new Date());
+  const record = getSessionRecordForDate(dateKey);
+  const isActiveDate = dateKey === getActiveDateKey();
 
   return {
     user_id: syncState.user.id,
     date_key: dateKey,
     completed: Boolean(record.completed),
     manual_completion: Boolean(record.manualCompletion),
-    checklist: isToday ? getChecklistSnapshot() : {},
-    set_rows: isToday ? getSetRowsSnapshot() : {},
-    timer: isToday ? getTimerSnapshot({ pause: true }) : {},
+    checklist: isActiveDate ? getChecklistSnapshot() : record.checklist || {},
+    set_rows: isActiveDate ? getSetRowsSnapshot() : record.setRows || {},
+    timer: isActiveDate ? getTimerSnapshot({ pause: true }) : record.timer || {},
     notes: record.notes || "",
     exercises: record.exercises || {},
     monitoring: record.monitoring || {},
@@ -1555,39 +1596,43 @@ const createHistoryRecordFromSupabaseRow = (row) => {
     completed: row.completed === true,
     manualCompletion: row.manual_completion === true,
     updatedAt: row.updated_at || new Date().toISOString(),
+    checklist: row.checklist && typeof row.checklist === "object" ? row.checklist : {},
+    setRows: row.set_rows && typeof row.set_rows === "object" ? row.set_rows : {},
+    timer: row.timer && typeof row.timer === "object" ? row.timer : {},
     exercises: row.exercises && typeof row.exercises === "object" ? row.exercises : {},
     monitoring: row.monitoring && typeof row.monitoring === "object" ? row.monitoring : {},
     notes: typeof row.notes === "string" ? row.notes : ""
   };
 };
 
-const applyCurrentSupabaseRow = (row) => {
-  if (row.checklist && typeof row.checklist === "object") {
-    applyChecklistSnapshot(row.checklist);
+const applySessionRecordToCurrentView = (record) => {
+  if (!record) return;
+
+  if (record.checklist && typeof record.checklist === "object") {
+    applyChecklistSnapshot(record.checklist);
     localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(getChecklistSnapshot()));
   }
 
-  if (row.set_rows && typeof row.set_rows === "object") {
-    applySetRowsSnapshot(row.set_rows);
+  if (record.setRows && typeof record.setRows === "object") {
+    applySetRowsSnapshot(record.setRows);
     localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(getSetRowsSnapshot()));
   }
 
-  if (row.timer && typeof row.timer === "object") {
+  if (record.timer && typeof record.timer === "object") {
     clearTimerInterval();
-    applyTimerSnapshot({ ...row.timer, isRunning: false, startedAt: null });
+    applyTimerSnapshot({ ...record.timer, isRunning: false, startedAt: null });
     localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot()));
     renderTimer();
   }
 
   const notes = document.getElementById("session-notes");
   if (notes) {
-    notes.value = typeof row.notes === "string" ? row.notes : "";
+    notes.value = typeof record.notes === "string" ? record.notes : "";
     localStorage.setItem(STORAGE_KEYS.notes, notes.value);
   }
 };
 
 const applySupabaseRows = (rows) => {
-  const todayKey = formatDateKey(new Date());
   syncState.isApplyingRemote = true;
   calendarState.sessionHistory = {};
   calendarState.completedDates = new Set();
@@ -1598,8 +1643,9 @@ const applySupabaseRows = (rows) => {
 
     calendarState.sessionHistory[record.dateKey] = record;
     if (record.completed) calendarState.completedDates.add(record.dateKey);
-    if (record.dateKey === todayKey) applyCurrentSupabaseRow(row);
   });
+
+  applySessionRecordToCurrentView(getSessionRecordForDate(getActiveDateKey()));
 
   writeSessionHistory();
   syncCompletedDatesWithHistory();
@@ -1871,8 +1917,58 @@ const renderSessionHistory = () => {
   panel.appendChild(notes);
 };
 
+const setSessionEditingDisabled = (isDisabled) => {
+  document.querySelectorAll([
+    "[data-checklist-item]",
+    ".set-play-button",
+    ".set-done input",
+    '[id$="-set-reset"]',
+    "#reset-all-sets",
+    "#reset-checklist",
+    "#clear-notes",
+    "#timer-toggle",
+    "#timer-reset",
+    "#session-notes"
+  ].join(",")).forEach((element) => {
+    element.disabled = isDisabled;
+  });
+};
+
+const applySelectedDateSession = () => {
+  const dateKey = getActiveDateKey();
+  const isFutureDate = isFutureDateKey(dateKey);
+
+  setSessionEditingDisabled(isFutureDate);
+  setupSessionMeta();
+
+  if (isFutureDate) {
+    clearTimerInterval();
+    clearSetRowInterval();
+    applySessionRecordToCurrentView(createMinimalSessionHistoryRecord(dateKey, false));
+    renderTimer();
+    renderSetRows();
+    updateProgress();
+    return;
+  }
+
+  clearTimerInterval();
+  clearSetRowInterval();
+  applySessionRecordToCurrentView(getSessionRecordForDate(dateKey));
+  renderTimer();
+  renderSetRows();
+  ensureSetRowInterval();
+  updateProgress();
+};
+
 const selectCalendarDate = (dateKey) => {
+  if (dateKey === calendarState.selectedDateKey) {
+    renderCalendar();
+    return;
+  }
+
+  saveActiveSessionHistory();
   calendarState.selectedDateKey = dateKey;
+  applySelectedDateSession();
   renderCalendar();
 };
 
@@ -1893,9 +1989,11 @@ const toggleDateCompletion = (dateKey) => {
 };
 
 const markTodayComplete = () => {
-  const todayKey = formatDateKey(new Date());
+  saveActiveSessionHistory();
+  const todayKey = getTodayDateKey();
   calendarState.completedDates.add(todayKey);
   calendarState.selectedDateKey = todayKey;
+  applySelectedDateSession();
   saveTodaySessionHistory({ completed: true, manualCompletion: true });
   saveCompletedDates();
   renderCalendar();
@@ -1924,9 +2022,9 @@ const renderTodayCompletionButton = () => {
   const markTodayButton = document.getElementById("mark-today-complete");
   if (!markTodayButton) return;
 
-  const todayKey = formatDateKey(new Date());
+  const todayKey = getTodayDateKey();
   const isComplete = calendarState.completedDates.has(todayKey);
-  const canMarkToday = canCompleteToday() && !isComplete;
+  const canMarkToday = getActiveDateKey() === todayKey && canCompleteToday() && !isComplete;
 
   markTodayButton.disabled = !canMarkToday;
   markTodayButton.textContent = isComplete ? t("calendar.todayCompleted") : t("calendar.markToday");
@@ -1941,7 +2039,7 @@ const renderCalendar = () => {
   const month = calendarState.visibleDate.getMonth();
   const firstDay = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayKey = formatDateKey(new Date());
+  const todayKey = getTodayDateKey();
 
   if (calendarMonth) {
     calendarMonth.textContent = new Intl.DateTimeFormat(getCurrentLocale(), {
@@ -1997,7 +2095,7 @@ const setupCalendar = () => {
   calendarState.sessionHistory = readStoredSessionHistory();
   calendarState.completedDates = new Set(readStoredCompletedDates());
   syncCompletedDatesWithHistory();
-  calendarState.selectedDateKey = formatDateKey(new Date());
+  calendarState.selectedDateKey = getTodayDateKey();
   renderCalendar();
 
   document.getElementById("calendar-prev")?.addEventListener("click", () => {
@@ -2577,15 +2675,17 @@ const setupChecklistCollapse = () => {
 };
 
 const setupSessionMeta = () => {
+  const activeDate = createDateFromKey(getActiveDateKey()) || new Date();
+
   document.getElementById("session-date").textContent = new Intl.DateTimeFormat(getCurrentLocale(), {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric"
-  }).format(new Date());
+  }).format(activeDate);
 
   document.getElementById("last-updated").textContent = formatDateTime(
-    localStorage.getItem(STORAGE_KEYS.lastUpdated)
+    getSessionRecordForDate(getActiveDateKey())?.updatedAt || localStorage.getItem(STORAGE_KEYS.lastUpdated)
   );
 };
 
@@ -2601,5 +2701,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupReset();
   setupTimer();
   setupSetRows();
+  applySelectedDateSession();
   setupSupabaseSync();
 });
