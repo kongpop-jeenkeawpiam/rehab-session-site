@@ -44,10 +44,29 @@ Open: <http://localhost:8000/>
    - Build Command: leave empty
    - Output Directory: `.`
 
+## Optional Supabase sync
+
+The tracker works locally without Supabase. To sync progress across devices:
+
+1. Create a Supabase project.
+2. In Supabase SQL Editor, run the contents of `supabase-schema.sql`.
+3. In Supabase, enable Email auth under Authentication.
+4. Copy your Project URL and anon public key from Project Settings -> API.
+5. Paste them into `index.html`:
+
+```html
+window.KNEE_REHAB_SUPABASE_CONFIG = {
+  url: "https://YOUR_PROJECT_REF.supabase.co",
+  anonKey: "YOUR_SUPABASE_ANON_KEY"
+};
+```
+
+The anon key is safe to ship in a static site. Privacy comes from Supabase Auth plus the row-level security policies in `supabase-schema.sql`.
+
 ## Notes
 
-- No backend is required.
-- Checklist progress, notes, and local session history are saved only in the current browser using `localStorage`.
+- No custom backend is required.
+- Checklist progress, notes, and local session history are saved in the current browser using `localStorage`; with Supabase configured, authenticated progress also syncs to the cloud.
 - The tracker includes a persistent session timer with start, pause, resume, and reset controls stored locally in the browser.
 - Wall Sit and Straight Leg Raise include workout-style set rows with per-set timers saved locally in the browser.
 - This tracker follows an existing rehab plan and does not replace medical advice.

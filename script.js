@@ -36,10 +36,25 @@ const STORAGE_KEYS = {
   language: "kneeRehabLanguage"
 };
 
+const SUPABASE_TABLE = "rehab_sessions";
+const SUPABASE_PLACEHOLDER_VALUES = new Set([
+  "",
+  "YOUR_SUPABASE_URL",
+  "YOUR_SUPABASE_ANON_KEY",
+  "https://YOUR_PROJECT_REF.supabase.co"
+]);
+
 const SUPPORTED_LANGUAGES = ["en", "th"];
 const DEFAULT_LANGUAGE = "en";
 
 let currentLanguage = DEFAULT_LANGUAGE;
+
+const syncState = {
+  client: null,
+  user: null,
+  isConfigured: false,
+  isApplyingRemote: false
+};
 
 const translations = {
   en: {
@@ -199,7 +214,26 @@ const translations = {
     "history.walking": "Walking",
     "history.done": "Done",
     "history.notDone": "Not done",
-    "history.noNotes": "No notes saved."
+    "history.noNotes": "No notes saved.",
+    "sync.meta": "Cloud sync",
+    "sync.heading": "Supabase Sync",
+    "sync.description": "Sign in with email and password to access your progress anywhere.",
+    "sync.email": "Email",
+    "sync.password": "Password",
+    "sync.signIn": "Sign in",
+    "sync.signUp": "Create account",
+    "sync.signOut": "Sign out",
+    "sync.statusDisabled": "Local only",
+    "sync.statusSignedOut": "Sign in to sync",
+    "sync.statusSignedIn": "Synced",
+    "sync.statusLoading": "Loading cloud data...",
+    "sync.statusSaving": "Saving...",
+    "sync.statusSaved": "Saved",
+    "sync.statusCheckEmail": "Check your email",
+    "sync.statusError": "Sync error",
+    "sync.configMissing": "Add your Supabase URL and anon key in index.html to enable cloud sync.",
+    "sync.user": "Signed in as {email}",
+    "sync.credentialsRequired": "Enter your email and password."
   },
   th: {
     "meta.description": "ตัวติดตามการฟื้นฟูเข่าที่บ้านรายวัน พร้อมรายการตรวจสอบการออกกำลังกาย ความคืบหน้า การตรวจความปลอดภัย และบันทึก",
@@ -358,7 +392,26 @@ const translations = {
     "history.walking": "การเดิน",
     "history.done": "เสร็จ",
     "history.notDone": "ยังไม่เสร็จ",
-    "history.noNotes": "ไม่มีบันทึกที่บันทึกไว้"
+    "history.noNotes": "ไม่มีบันทึกที่บันทึกไว้",
+    "sync.meta": "ซิงก์คลาวด์",
+    "sync.heading": "ซิงก์ Supabase",
+    "sync.description": "เข้าสู่ระบบด้วยอีเมลและรหัสผ่านเพื่อเข้าถึงความคืบหน้าของคุณได้ทุกที่",
+    "sync.email": "อีเมล",
+    "sync.password": "รหัสผ่าน",
+    "sync.signIn": "เข้าสู่ระบบ",
+    "sync.signUp": "สร้างบัญชี",
+    "sync.signOut": "ออกจากระบบ",
+    "sync.statusDisabled": "เฉพาะเครื่องนี้",
+    "sync.statusSignedOut": "เข้าสู่ระบบเพื่อซิงก์",
+    "sync.statusSignedIn": "ซิงก์แล้ว",
+    "sync.statusLoading": "กำลังโหลดข้อมูลคลาวด์...",
+    "sync.statusSaving": "กำลังบันทึก...",
+    "sync.statusSaved": "บันทึกแล้ว",
+    "sync.statusCheckEmail": "ตรวจสอบอีเมลของคุณ",
+    "sync.statusError": "เกิดข้อผิดพลาดในการซิงก์",
+    "sync.configMissing": "เพิ่ม Supabase URL และ anon key ใน index.html เพื่อเปิดใช้การซิงก์คลาวด์",
+    "sync.user": "เข้าสู่ระบบเป็น {email}",
+    "sync.credentialsRequired": "กรอกอีเมลและรหัสผ่าน"
   }
 };
 
@@ -367,6 +420,14 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: ".eyebrow", key: "site.eyebrow" },
   { selector: ".subtitle", key: "site.subtitle" },
   { selector: "#language-switcher", key: "language.selection", attr: "aria-label" },
+  { selector: "#sync-auth-panel .meta-label", key: "sync.meta" },
+  { selector: "#sync-heading", key: "sync.heading" },
+  { selector: "#sync-description", key: "sync.description" },
+  { selector: 'label[for="sync-email"]', key: "sync.email" },
+  { selector: 'label[for="sync-password"]', key: "sync.password" },
+  { selector: "#sync-sign-in", key: "sync.signIn" },
+  { selector: "#sync-sign-up", key: "sync.signUp" },
+  { selector: "#sync-sign-out", key: "sync.signOut" },
   { selector: ".session-panel", key: "session.summary", attr: "aria-label" },
   { selector: ".session-panel > div:nth-child(1) .meta-label", key: "session.today" },
   { selector: ".session-panel > div:nth-child(2) .meta-label", key: "session.lastUpdated" },
@@ -473,6 +534,24 @@ const getInitialLanguage = () => getStoredLanguage() || getBrowserLanguagePrefer
 const getCurrentLanguage = () => currentLanguage;
 
 const getCurrentLocale = () => currentLanguage === "th" ? "th-TH" : "en-US";
+
+const getSupabaseConfig = () => {
+  const config = window.KNEE_REHAB_SUPABASE_CONFIG || {};
+  return {
+    url: String(config.url || "").trim(),
+    anonKey: String(config.anonKey || "").trim()
+  };
+};
+
+const hasSupabaseConfigValue = (value) => !SUPABASE_PLACEHOLDER_VALUES.has(value);
+
+const createSupabaseClient = () => {
+  const config = getSupabaseConfig();
+  syncState.isConfigured = hasSupabaseConfigValue(config.url) && hasSupabaseConfigValue(config.anonKey);
+
+  if (!syncState.isConfigured || !window.supabase?.createClient) return null;
+  return window.supabase.createClient(config.url, config.anonKey);
+};
 
 const interpolate = (template, values = {}) => Object.entries(values)
   .reduce((result, [key, value]) => result.replaceAll(`{${key}}`, String(value)), template);
@@ -630,6 +709,9 @@ const refreshLocalizedDynamicText = () => {
   }
   if (document.getElementById("session-history-panel")) {
     renderSessionHistory();
+  }
+  if (document.getElementById("sync-auth-panel")) {
+    renderSyncAuthState();
   }
 };
 
@@ -954,6 +1036,25 @@ const renderExerciseProgress = () => {
   });
 };
 
+const getTimerSnapshot = (options = {}) => {
+  const startedAt = Number(timerState.startedAt);
+  const shouldPause = options.pause === true;
+
+  return {
+    elapsedMs: normalizeElapsedMs(shouldPause ? getCurrentElapsedMs() : timerState.elapsedMs),
+    startedAt: shouldPause ? null : Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null,
+    isRunning: shouldPause ? false : Boolean(timerState.isRunning)
+  };
+};
+
+const applyTimerSnapshot = (storedTimer = {}) => {
+  const startedAt = Number(storedTimer.startedAt);
+
+  timerState.elapsedMs = normalizeElapsedMs(storedTimer.elapsedMs);
+  timerState.startedAt = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
+  timerState.isRunning = storedTimer.isRunning === true && timerState.startedAt !== null;
+};
+
 const readStoredTimer = () => {
   try {
     const storedValue = localStorage.getItem(STORAGE_KEYS.timer);
@@ -973,22 +1074,12 @@ const readStoredTimer = () => {
 };
 
 const saveTimer = () => {
-  const startedAt = Number(timerState.startedAt);
-
-  localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify({
-    elapsedMs: normalizeElapsedMs(timerState.elapsedMs),
-    startedAt: Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null,
-    isRunning: Boolean(timerState.isRunning)
-  }));
+  localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot()));
+  queueSupabaseSaveDate(formatDateKey(new Date()));
 };
 
 const restoreTimer = () => {
-  const storedTimer = readStoredTimer();
-  const startedAt = Number(storedTimer.startedAt);
-
-  timerState.elapsedMs = normalizeElapsedMs(storedTimer.elapsedMs);
-  timerState.startedAt = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
-  timerState.isRunning = storedTimer.isRunning === true && timerState.startedAt !== null;
+  applyTimerSnapshot(readStoredTimer());
 };
 
 const readStoredSetRows = () => {
@@ -1010,7 +1101,7 @@ const readStoredSetRows = () => {
   }
 };
 
-const saveSetRows = () => {
+const getSetRowsSnapshot = () => {
   const state = {};
 
   getAllSetRows().forEach((set) => {
@@ -1032,13 +1123,10 @@ const saveSetRows = () => {
     };
   });
 
-  localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(state));
-  saveTodaySessionHistory();
+  return state;
 };
 
-const restoreSetRows = () => {
-  const storedRows = readStoredSetRows();
-
+const applySetRowsSnapshot = (storedRows = {}) => {
   getAllSetRows().forEach((set) => {
     const storedState = storedRows[set.id];
     const startedAt = Number(storedState?.startedAt);
@@ -1062,6 +1150,15 @@ const restoreSetRows = () => {
     setRowState[set.id].restDurationSec = Number(storedState?.restDurationSec) || restDurationSec;
     setRowState[set.id].isRunning = false; // keep it paused on refresh
   });
+};
+
+const saveSetRows = () => {
+  localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(getSetRowsSnapshot()));
+  saveTodaySessionHistory();
+};
+
+const restoreSetRows = () => {
+  applySetRowsSnapshot(readStoredSetRows());
 };
 
 const clearTimerInterval = () => {
@@ -1132,6 +1229,7 @@ const resetTimer = () => {
   timerState.isRunning = false;
   localStorage.removeItem(STORAGE_KEYS.timer);
   renderTimer();
+  queueSupabaseSaveDate(formatDateKey(new Date()));
   saveLastUpdated();
 };
 
@@ -1165,6 +1263,20 @@ const getChecklistStats = () => {
     completed: checkboxes.filter((checkbox) => checkbox.checked).length,
     total: checkboxes.length
   };
+};
+
+const getChecklistSnapshot = () => {
+  const state = {};
+  getCheckboxes().forEach((checkbox) => {
+    state[checkbox.id] = checkbox.checked;
+  });
+  return state;
+};
+
+const applyChecklistSnapshot = (state = {}) => {
+  getCheckboxes().forEach((checkbox) => {
+    checkbox.checked = Boolean(state[checkbox.id]);
+  });
 };
 
 const readStoredChecklist = () => {
@@ -1313,6 +1425,7 @@ const saveTodaySessionHistory = (options = {}) => {
   const todayKey = formatDateKey(new Date());
   calendarState.sessionHistory[todayKey] = createCurrentSessionHistoryRecord(todayKey, options);
   writeSessionHistory();
+  queueSupabaseSaveDate(todayKey);
 };
 
 const saveSelectedDateCompletionHistory = (dateKey, completed) => {
@@ -1323,6 +1436,330 @@ const saveSelectedDateCompletionHistory = (dateKey, completed) => {
     ? createCurrentSessionHistoryRecord(dateKey, { completed: completed, manualCompletion: true })
     : createMinimalSessionHistoryRecord(dateKey, completed);
   writeSessionHistory();
+  queueSupabaseSaveDate(dateKey);
+};
+
+const canUseSupabaseSync = () => syncState.client && syncState.user && !syncState.isApplyingRemote;
+
+const setSyncStatus = (message, statusClass = "") => {
+  const status = document.getElementById("sync-status");
+  if (!status) return;
+
+  status.textContent = message;
+  status.classList.toggle("connected", statusClass === "connected");
+  status.classList.toggle("error", statusClass === "error");
+};
+
+const getSyncControls = () => ({
+  email: document.getElementById("sync-email"),
+  password: document.getElementById("sync-password"),
+  signIn: document.getElementById("sync-sign-in"),
+  signUp: document.getElementById("sync-sign-up"),
+  signOut: document.getElementById("sync-sign-out"),
+  user: document.getElementById("sync-user")
+});
+
+const renderSyncAuthState = () => {
+  const controls = getSyncControls();
+  const isSignedIn = Boolean(syncState.user);
+  const isAvailable = Boolean(syncState.client);
+
+  if (controls.email) controls.email.disabled = !isAvailable || isSignedIn;
+  if (controls.password) controls.password.disabled = !isAvailable || isSignedIn;
+  if (controls.signIn) {
+    controls.signIn.hidden = isSignedIn;
+    controls.signIn.disabled = !isAvailable;
+  }
+  if (controls.signUp) {
+    controls.signUp.hidden = isSignedIn;
+    controls.signUp.disabled = !isAvailable;
+  }
+  if (controls.signOut) controls.signOut.hidden = !isSignedIn;
+
+  if (controls.user) {
+    controls.user.hidden = !isSignedIn;
+    controls.user.textContent = isSignedIn ? t("sync.user", { email: syncState.user.email || "" }) : "";
+  }
+
+  if (!isAvailable) {
+    setSyncStatus(t("sync.statusDisabled"));
+    if (controls.user) {
+      controls.user.hidden = false;
+      controls.user.textContent = t("sync.configMissing");
+    }
+    return;
+  }
+
+  setSyncStatus(isSignedIn ? t("sync.statusSignedIn") : t("sync.statusSignedOut"), isSignedIn ? "connected" : "");
+};
+
+const normalizeSupabaseDateKey = (value) => {
+  if (typeof value !== "string") return null;
+  return value.slice(0, 10);
+};
+
+const getStoredRecordForDate = (dateKey) => calendarState.sessionHistory[dateKey]
+  || (dateKey === formatDateKey(new Date())
+    ? createCurrentSessionHistoryRecord(dateKey)
+    : createMinimalSessionHistoryRecord(dateKey, calendarState.completedDates.has(dateKey)));
+
+const createSupabaseRow = (dateKey) => {
+  const record = getStoredRecordForDate(dateKey);
+  const isToday = dateKey === formatDateKey(new Date());
+
+  return {
+    user_id: syncState.user.id,
+    date_key: dateKey,
+    completed: Boolean(record.completed),
+    manual_completion: Boolean(record.manualCompletion),
+    checklist: isToday ? getChecklistSnapshot() : {},
+    set_rows: isToday ? getSetRowsSnapshot() : {},
+    timer: isToday ? getTimerSnapshot({ pause: true }) : {},
+    notes: record.notes || "",
+    exercises: record.exercises || {},
+    monitoring: record.monitoring || {},
+    updated_at: record.updatedAt || new Date().toISOString()
+  };
+};
+
+const saveSupabaseDate = async (dateKey) => {
+  if (!canUseSupabaseSync() || !dateKey) return;
+
+  try {
+    setSyncStatus(t("sync.statusSaving"));
+    const { error } = await syncState.client
+      .from(SUPABASE_TABLE)
+      .upsert(createSupabaseRow(dateKey), { onConflict: "user_id,date_key" });
+
+    if (error) throw error;
+    setSyncStatus(t("sync.statusSaved"), "connected");
+  } catch (error) {
+    console.warn("Could not save Supabase session.", error);
+    setSyncStatus(t("sync.statusError"), "error");
+  }
+};
+
+const queueSupabaseSaveDate = (dateKey) => {
+  if (!canUseSupabaseSync()) return;
+  window.setTimeout(() => {
+    saveSupabaseDate(dateKey);
+  }, 0);
+};
+
+const createHistoryRecordFromSupabaseRow = (row) => {
+  const dateKey = normalizeSupabaseDateKey(row.date_key);
+  if (!dateKey || !createDateFromKey(dateKey)) return null;
+
+  return {
+    dateKey: dateKey,
+    completed: row.completed === true,
+    manualCompletion: row.manual_completion === true,
+    updatedAt: row.updated_at || new Date().toISOString(),
+    exercises: row.exercises && typeof row.exercises === "object" ? row.exercises : {},
+    monitoring: row.monitoring && typeof row.monitoring === "object" ? row.monitoring : {},
+    notes: typeof row.notes === "string" ? row.notes : ""
+  };
+};
+
+const applyCurrentSupabaseRow = (row) => {
+  if (row.checklist && typeof row.checklist === "object") {
+    applyChecklistSnapshot(row.checklist);
+    localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(getChecklistSnapshot()));
+  }
+
+  if (row.set_rows && typeof row.set_rows === "object") {
+    applySetRowsSnapshot(row.set_rows);
+    localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(getSetRowsSnapshot()));
+  }
+
+  if (row.timer && typeof row.timer === "object") {
+    clearTimerInterval();
+    applyTimerSnapshot({ ...row.timer, isRunning: false, startedAt: null });
+    localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot()));
+    renderTimer();
+  }
+
+  const notes = document.getElementById("session-notes");
+  if (notes) {
+    notes.value = typeof row.notes === "string" ? row.notes : "";
+    localStorage.setItem(STORAGE_KEYS.notes, notes.value);
+  }
+};
+
+const applySupabaseRows = (rows) => {
+  const todayKey = formatDateKey(new Date());
+  syncState.isApplyingRemote = true;
+  calendarState.sessionHistory = {};
+  calendarState.completedDates = new Set();
+
+  rows.forEach((row) => {
+    const record = createHistoryRecordFromSupabaseRow(row);
+    if (!record) return;
+
+    calendarState.sessionHistory[record.dateKey] = record;
+    if (record.completed) calendarState.completedDates.add(record.dateKey);
+    if (record.dateKey === todayKey) applyCurrentSupabaseRow(row);
+  });
+
+  writeSessionHistory();
+  syncCompletedDatesWithHistory();
+  renderSetRows();
+  updateProgress();
+  renderCalendar();
+  renderSessionHistory();
+  syncState.isApplyingRemote = false;
+};
+
+const seedSupabaseFromLocal = async () => {
+  if (!syncState.client || !syncState.user) return;
+
+  const dateKeys = getValidCompletedDates([
+    ...Object.keys(calendarState.sessionHistory),
+    ...Array.from(calendarState.completedDates)
+  ]);
+
+  if (dateKeys.length === 0) {
+    setSyncStatus(t("sync.statusSignedIn"), "connected");
+    return;
+  }
+
+  try {
+    setSyncStatus(t("sync.statusSaving"));
+    const { error } = await syncState.client
+      .from(SUPABASE_TABLE)
+      .upsert(dateKeys.map(createSupabaseRow), { onConflict: "user_id,date_key" });
+
+    if (error) throw error;
+    setSyncStatus(t("sync.statusSaved"), "connected");
+  } catch (error) {
+    console.warn("Could not seed Supabase sessions from local storage.", error);
+    setSyncStatus(t("sync.statusError"), "error");
+  }
+};
+
+const loadSupabaseSessions = async () => {
+  if (!syncState.client || !syncState.user) return;
+
+  try {
+    setSyncStatus(t("sync.statusLoading"));
+    const { data, error } = await syncState.client
+      .from(SUPABASE_TABLE)
+      .select("*")
+      .eq("user_id", syncState.user.id)
+      .order("date_key", { ascending: true });
+
+    if (error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+    if (rows.length === 0) {
+      await seedSupabaseFromLocal();
+      return;
+    }
+
+    applySupabaseRows(rows);
+    setSyncStatus(t("sync.statusSignedIn"), "connected");
+  } catch (error) {
+    console.warn("Could not load Supabase sessions.", error);
+    setSyncStatus(t("sync.statusError"), "error");
+  }
+};
+
+const handleSupabaseSession = async (session) => {
+  const nextUser = session?.user || null;
+  const previousUserId = syncState.user?.id || null;
+  syncState.user = nextUser;
+  renderSyncAuthState();
+
+  if (nextUser && nextUser.id !== previousUserId) {
+    await loadSupabaseSessions();
+  }
+};
+
+const getSyncCredentials = () => {
+  const controls = getSyncControls();
+  return {
+    email: controls.email?.value.trim() || "",
+    password: controls.password?.value || ""
+  };
+};
+
+const signInToSupabase = async () => {
+  if (!syncState.client) return;
+  const credentials = getSyncCredentials();
+  if (!credentials.email || !credentials.password) {
+    setSyncStatus(t("sync.credentialsRequired"), "error");
+    return;
+  }
+
+  try {
+    setSyncStatus(t("sync.statusLoading"));
+    const { data, error } = await syncState.client.auth.signInWithPassword(credentials);
+    if (error) throw error;
+    await handleSupabaseSession(data.session);
+  } catch (error) {
+    console.warn("Could not sign in to Supabase.", error);
+    setSyncStatus(error.message || t("sync.statusError"), "error");
+  }
+};
+
+const signUpForSupabase = async () => {
+  if (!syncState.client) return;
+  const credentials = getSyncCredentials();
+  if (!credentials.email || !credentials.password) {
+    setSyncStatus(t("sync.credentialsRequired"), "error");
+    return;
+  }
+
+  try {
+    setSyncStatus(t("sync.statusLoading"));
+    const { data, error } = await syncState.client.auth.signUp(credentials);
+    if (error) throw error;
+    if (data.session) {
+      await handleSupabaseSession(data.session);
+    } else {
+      setSyncStatus(t("sync.statusCheckEmail"));
+    }
+  } catch (error) {
+    console.warn("Could not create Supabase account.", error);
+    setSyncStatus(error.message || t("sync.statusError"), "error");
+  }
+};
+
+const signOutOfSupabase = async () => {
+  if (!syncState.client) return;
+
+  try {
+    await syncState.client.auth.signOut();
+    syncState.user = null;
+    renderSyncAuthState();
+  } catch (error) {
+    console.warn("Could not sign out of Supabase.", error);
+    setSyncStatus(t("sync.statusError"), "error");
+  }
+};
+
+const setupSupabaseSync = () => {
+  syncState.client = createSupabaseClient();
+  renderSyncAuthState();
+
+  document.getElementById("sync-auth-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    signInToSupabase();
+  });
+  document.getElementById("sync-sign-up")?.addEventListener("click", signUpForSupabase);
+  document.getElementById("sync-sign-out")?.addEventListener("click", signOutOfSupabase);
+
+  if (!syncState.client) return;
+
+  syncState.client.auth.getSession()
+    .then(({ data }) => handleSupabaseSession(data.session))
+    .catch((error) => {
+      console.warn("Could not restore Supabase auth session.", error);
+      setSyncStatus(t("sync.statusError"), "error");
+    });
+
+  syncState.client.auth.onAuthStateChange((_event, session) => {
+    handleSupabaseSession(session);
+  });
 };
 
 const createHistoryText = (text, className) => {
@@ -1588,11 +2025,7 @@ const setupCalendar = () => {
 };
 
 const saveChecklist = () => {
-  const state = {};
-  getCheckboxes().forEach((checkbox) => {
-    state[checkbox.id] = checkbox.checked;
-  });
-  localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(getChecklistSnapshot()));
   saveTodaySessionHistory();
   saveLastUpdated();
 };
@@ -1615,10 +2048,7 @@ const updateProgress = () => {
 };
 
 const restoreChecklist = () => {
-  const state = readStoredChecklist();
-  getCheckboxes().forEach((checkbox) => {
-    checkbox.checked = Boolean(state[checkbox.id]);
-  });
+  applyChecklistSnapshot(readStoredChecklist());
   updateProgress();
 };
 
@@ -2171,4 +2601,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupReset();
   setupTimer();
   setupSetRows();
+  setupSupabaseSync();
 });

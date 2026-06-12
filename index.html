@@ -20,6 +20,32 @@
         <button type="button" class="language-button" data-language-option="th" aria-pressed="false">ไทย</button>
       </div>
 
+      <section id="sync-auth-panel" class="sync-auth-panel" aria-labelledby="sync-heading">
+        <div class="sync-auth-header">
+          <div>
+            <span class="meta-label">Cloud sync</span>
+            <h2 id="sync-heading">Supabase Sync</h2>
+            <p id="sync-description">Sign in with email and password to access your progress anywhere.</p>
+          </div>
+          <span id="sync-status" class="sync-status" aria-live="polite">Local only</span>
+        </div>
+
+        <form id="sync-auth-form" class="sync-auth-form">
+          <div class="sync-fields">
+            <label for="sync-email">Email</label>
+            <input type="email" id="sync-email" autocomplete="email" />
+            <label for="sync-password">Password</label>
+            <input type="password" id="sync-password" autocomplete="current-password" minlength="6" />
+          </div>
+          <div class="sync-actions">
+            <button type="submit" id="sync-sign-in" class="button primary-button">Sign in</button>
+            <button type="button" id="sync-sign-up" class="button secondary-button">Create account</button>
+            <button type="button" id="sync-sign-out" class="button secondary-button" hidden>Sign out</button>
+          </div>
+        </form>
+        <p id="sync-user" class="sync-user" hidden></p>
+      </section>
+
       <div class="session-panel" aria-label="Session summary">
         <div>
           <span class="meta-label">Today’s session</span>
@@ -536,6 +562,13 @@
     </footer>
   </div>
 
+  <script>
+    window.KNEE_REHAB_SUPABASE_CONFIG = {
+      url: "",
+      anonKey: ""
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>

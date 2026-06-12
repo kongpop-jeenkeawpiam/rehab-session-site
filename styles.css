@@ -122,6 +122,97 @@ h1 {
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
 }
 
+.sync-auth-panel {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1rem 0 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.sync-auth-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.sync-auth-header h2,
+.sync-auth-header p,
+.sync-user {
+  margin: 0;
+}
+
+.sync-auth-header h2 {
+  font-size: 1.05rem;
+}
+
+.sync-auth-header p,
+.sync-user {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--card);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.sync-status.connected {
+  border-color: rgba(22, 163, 74, 0.35);
+  color: #14532d;
+  background: var(--success-soft);
+}
+
+.sync-status.error {
+  border-color: rgba(220, 38, 38, 0.24);
+  color: #991b1b;
+  background: var(--danger-soft);
+}
+
+.sync-auth-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sync-fields {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.sync-fields label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.sync-fields input {
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--card);
+}
+
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
 .session-panel {
   display: grid;
   gap: 0.9rem;
