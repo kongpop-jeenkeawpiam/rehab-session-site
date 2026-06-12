@@ -12,8 +12,13 @@
   <div class="page-shell">
     <header class="hero">
       <p class="eyebrow">Home Rehabilitation</p>
-      <h1>Knee Rehab Session Tracker</h1>
+      <h1 data-i18n="site.title">Knee Rehab Session Tracker</h1>
       <p class="subtitle">Daily home rehabilitation plan and safety checklist</p>
+
+      <div id="language-switcher" class="language-switcher" role="group" aria-label="Language selection">
+        <button type="button" class="language-button" data-language-option="en" aria-pressed="true">English</button>
+        <button type="button" class="language-button" data-language-option="th" aria-pressed="false">ไทย</button>
+      </div>
 
       <div class="session-panel" aria-label="Session summary">
         <div>
@@ -519,7 +524,7 @@
           </div>
         </div>
         <label class="notes-label" for="session-notes">Notes</label>
-        <textarea id="session-notes" rows="5" placeholder="Example: Mild thigh burn only, no joint pain. Knee felt normal next morning."></textarea>
+        <textarea id="session-notes" rows="5" data-i18n-placeholder="notes.placeholder" placeholder="Example: Mild thigh burn only, no joint pain. Knee felt normal next morning."></textarea>
       </section>
     </main>
 

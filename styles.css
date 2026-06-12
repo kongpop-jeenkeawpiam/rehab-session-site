@@ -93,6 +93,35 @@ h1 {
   font-size: clamp(1rem, 2.8vw, 1.18rem);
 }
 
+.language-switcher {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f8fbff;
+}
+
+.language-button {
+  min-height: 38px;
+  padding: 0.45rem 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.language-button[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--primary);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+}
+
 .session-panel {
   display: grid;
   gap: 0.9rem;
@@ -258,6 +287,7 @@ h1 {
   font-size: 0.84rem;
   font-weight: 850;
   line-height: 1.2;
+  white-space: normal;
   text-align: center;
 }
 
@@ -606,7 +636,7 @@ dd {
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 850;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .set-tracker {

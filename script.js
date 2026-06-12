@@ -32,7 +32,627 @@ const STORAGE_KEYS = {
   completedDates: "kneeRehabCompletedDates",
   sessionHistory: "kneeRehabSessionHistory",
   voiceCuesEnabled: "kneeRehabVoiceCuesEnabled",
-  checklistCollapse: "kneeRehabChecklistCollapseState"
+  checklistCollapse: "kneeRehabChecklistCollapseState",
+  language: "kneeRehabLanguage"
+};
+
+const SUPPORTED_LANGUAGES = ["en", "th"];
+const DEFAULT_LANGUAGE = "en";
+
+let currentLanguage = DEFAULT_LANGUAGE;
+
+const translations = {
+  en: {
+    "meta.description": "Daily knee home rehabilitation session tracker with exercise checklist, progress, safety checks, and notes.",
+    "site.title": "Knee Rehab Session Tracker",
+    "site.eyebrow": "Home Rehabilitation",
+    "site.subtitle": "Daily home rehabilitation plan and safety checklist",
+    "language.selection": "Language selection",
+    "session.summary": "Session summary",
+    "session.today": "Today's session",
+    "session.loadingDate": "Loading date...",
+    "session.lastUpdated": "Last updated",
+    "session.notStartedYet": "Not started yet",
+    "timer.groupLabel": "Session timer",
+    "timer.label": "Session timer",
+    "timer.start": "Start",
+    "timer.pause": "Pause",
+    "timer.resume": "Resume",
+    "timer.reset": "Reset",
+    "timer.resetConfirm": "Reset the session timer? Your checklist and notes will stay saved.",
+    "voice.groupLabel": "Voice cue settings",
+    "voice.toggle": "Voice Cues",
+    "voice.on": "Voice cues on",
+    "voice.off": "Voice cues off",
+    "progress.heading": "Progress",
+    "progress.text": "Progress: <span id=\"completed-count\">{completed}</span> / <span id=\"total-count\">{total}</span> completed",
+    "exercise.progressHeading": "Exercise Progress",
+    "exercise.progressMeta": "Sets and technique checks",
+    "exercise.wall": "Wall Sit",
+    "exercise.slr": "Straight Leg Raise",
+    "exercise.bridge": "Glute Bridges",
+    "exercise.clam": "Clamshells",
+    "progress.sets": "<span id=\"{id}-progress-sets\">{value}</span> sets",
+    "progress.checks": "<span id=\"{id}-progress-checks\">{value}</span> checks",
+    "status.finished": "Finished",
+    "status.inProgress": "In progress",
+    "status.notStarted": "Not started",
+    "status.noDetail": "No detail",
+    "calendar.meta": "Completion calendar",
+    "calendar.heading": "Monthly Progress",
+    "calendar.navLabel": "Calendar month navigation",
+    "calendar.previous": "Previous month",
+    "calendar.next": "Next month",
+    "calendar.loading": "Loading...",
+    "calendar.weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "calendar.markToday": "Mark Today Complete",
+    "calendar.todayCompleted": "Today Completed",
+    "calendar.selectedDay": "Selected day",
+    "calendar.selectDate": "Select a date",
+    "calendar.markComplete": "Mark Complete",
+    "calendar.unmarkComplete": "Unmark Complete",
+    "calendar.completedAria": ", completed",
+    "plan.heading": "Daily Rehabilitation Plan",
+    "plan.description": "Perform these exercises daily from today until your next physical therapy session.",
+    "summary.volume": "Volume / Dosage",
+    "summary.timing": "Recommended Timing",
+    "summary.focus": "Primary Focus",
+    "summary.wall.title": "1. Wall Sit <span>(Shallow Angle)</span>",
+    "summary.wall.volume": "Hold 30 sec × 10 reps <br><strong>Total: 2 Sets</strong>",
+    "summary.wall.timing": "After returning to dorm / Before bed",
+    "summary.wall.focus": "Maintain a 50:50 weight distribution between both legs.",
+    "summary.slr.title": "2. Straight Leg Raise <span>(SLR)</span>",
+    "summary.slr.volume": "Hold 5 sec × 15 reps <br><strong>Total: 3 Sets</strong>",
+    "summary.slr.timing": "While relaxing / Watching basketball highlights",
+    "summary.slr.focus": "Turn toes out 15° to activate the inner thigh muscle (<strong>VMO</strong>).",
+    "summary.bridge.title": "3. Glute Bridges",
+    "summary.bridge.volume": "15 reps <br><strong>Total: 2 Sets</strong>",
+    "summary.bridge.timing": "After Wall Sit or before bed",
+    "summary.bridge.focus": "Squeeze glutes to lift the hips without arching the lower back.",
+    "summary.clam.title": "4. Clamshells",
+    "summary.clam.volume": "15 reps per side <br><strong>Total: 2 Sets</strong>",
+    "summary.clam.timing": "After Glute Bridges or while relaxing",
+    "summary.clam.focus": "Keep hips stacked and move from the outside hip without rolling backward.",
+    "section.wall.title": "Exercise 1: Wall Sit",
+    "section.wall.subtitle": "Joint protection and balance tuning",
+    "section.slr.title": "Exercise 2: Straight Leg Raise",
+    "section.slr.subtitle": "Knee lock and VMO activation",
+    "section.bridge.title": "Exercise 3: Glute Bridges",
+    "section.bridge.subtitle": "Hip drive and glute activation",
+    "section.clam.title": "Exercise 4: Clamshells",
+    "section.clam.subtitle": "Outer hip control and knee alignment",
+    "section.monitoring.title": "Post-Rehab Monitoring",
+    "section.monitoring.subtitle": "Delayed response check",
+    "checklist.hide": "Hide Checklist",
+    "checklist.show": "Show Checklist",
+    "sets.wall": "Wall Sit Sets",
+    "sets.slr": "Straight Leg Raise Sets",
+    "sets.bridge": "Glute Bridge Sets",
+    "sets.clam": "Clamshell Sets",
+    "sets.count": "<span id=\"{id}-set-count\">{count}</span> / <span id=\"{id}-set-total\">{total}</span> sets",
+    "sets.reset": "Reset Sets",
+    "set.label": "Set {number}",
+    "set.startLabel": "Start {exercise} set {number}",
+    "set.pauseLabel": "Pause {exercise} set {number}",
+    "set.done": "Done",
+    "set.doneAria": "{exercise} set {number} done",
+    "set.reps": "{count} reps",
+    "set.repsPerSide": "{count} reps per side",
+    "set.repsDone": "{count} reps done",
+    "set.activeRep": "Rep {current}/{total}",
+    "set.activeHoldRep": "HOLD! - Rep {current}/{total}",
+    "set.resting": "{cue}...",
+    "cue.hold": "Hold",
+    "cue.resting": "Resting",
+    "cue.relax": "Relax",
+    "cue.lift": "Lift",
+    "cue.open": "Open",
+    "cue.setComplete": "Set complete",
+    "check.wall.setup": "<strong>Setup:</strong> Upper back and hips are flat against the wall. No leaning or shifting hip weight to one side.",
+    "check.wall.angle": "<strong>Angle:</strong> Slide down to a shallow angle (<strong>30°-45° only</strong>). Do <strong>not</strong> go down to a 90° deep squat. Keep knees behind your toes.",
+    "check.wall.foot": "<strong>Foot Position:</strong> Feet are hip-width apart, or slightly wider, with toes pointed slightly outward (15°).",
+    "check.wall.data": "<strong>Data Check:</strong> Mindfully press the foot of your injured leg firmly into the floor. Do not let your healthy leg steal the workload.",
+    "check.wall.safety": "<strong>Safety Check:</strong> During the 30-second hold, feel the burn only in the thigh muscles. There should be <strong>no sharp pain inside the joint</strong> and <strong>no clicking/grating sounds</strong>.",
+    "check.slr.setup": "<strong>Setup:</strong> Lie flat on your back on the bed. Bend the knee of your healthy leg to stabilize your lower back.",
+    "check.slr.lock": "<strong>Lock &amp; Twist:</strong> Fully lock the knee of your injured leg straight until the kneecap floats. Then rotate your entire foot outward by 15°.",
+    "check.slr.lift": "<strong>Tempo - Lift:</strong> Lift the leg up slowly while counting 1-2-3, about 1 foot / 30 cm off the bed.",
+    "check.slr.hold": "<strong>Tempo - Hold:</strong> Squeeze and hold firmly at the top for 5 seconds.",
+    "check.slr.lower": "<strong>Tempo - Lower:</strong> Lower the leg down slowly while counting 3-2-1. Do not let the leg drop loosely.",
+    "check.slr.data": "<strong>Data Check:</strong> Feel a distinct contraction/burn in the inner thigh muscle (VMO), located just above the inner side of your kneecap.",
+    "check.bridge.setup": "<strong>Setup:</strong> Lie on your back with knees bent, feet flat, and feet hip-width apart.",
+    "check.bridge.core": "<strong>Core:</strong> Lightly brace your abdomen so the lower back does not arch as you lift.",
+    "check.bridge.lift": "<strong>Lift:</strong> Press through both heels and squeeze your glutes until hips line up with shoulders and knees.",
+    "check.bridge.safety": "<strong>Safety Check:</strong> Stop if you feel sharp knee pain, hamstring cramping that does not settle, or low-back pinching.",
+    "check.clam.setup": "<strong>Setup:</strong> Lie on your side with knees bent, feet together, and hips stacked.",
+    "check.clam.stack": "<strong>Hip Stack:</strong> Keep your pelvis still and avoid rolling your top hip backward.",
+    "check.clam.control": "<strong>Control:</strong> Lift the top knee slowly, pause briefly, then lower with control while feet stay together.",
+    "check.clam.safety": "<strong>Safety Check:</strong> Stop if the knee twists, pinches, or feels unstable during the movement.",
+    "monitoring.reminder": "Stop and follow your physical therapist's guidance if you notice sharp joint pain, increased swelling, or clicking/grating during the session.",
+    "check.monitor.immediate": "<strong>Immediately after finishing:</strong> The knee joint feels stable and has no increased throbbing or sharp pain.",
+    "check.monitor.morning": "<strong>Next Morning Check:</strong> The knee is not swollen, tight, or stiff.",
+    "check.monitor.walking": "<strong>Walking Check:</strong> Normal walking on flat ground feels smooth and pain-free.",
+    "notes.heading": "Session Notes",
+    "notes.description": "Optional notes about pain, swelling, stiffness, or anything to tell your PT.",
+    "notes.label": "Notes",
+    "notes.placeholder": "Example: Mild thigh burn only, no joint pain. Knee felt normal next morning.",
+    "notes.clear": "Clear Notes",
+    "notes.clearConfirm": "Clear session notes? Your checklist progress will stay saved.",
+    "footer.resetChecklist": "Reset Checklist",
+    "footer.resetAllSets": "Reset all sets",
+    "footer.note": "This tracker is for following your given rehab plan. It does not replace medical advice.",
+    "reset.checklistConfirm": "Reset all checklist items? Your notes will be kept.",
+    "reset.exerciseSetsConfirm": "Reset {exercise} set rows? Your checklist, notes, and session timer will stay saved.",
+    "reset.allSetsConfirm": "Reset all exercise set rows? Your checklist, notes, and session timer will stay saved.",
+    "history.heading": "Session History",
+    "history.selectDate": "Select a date to see saved progress.",
+    "history.completedNoDetail": "Completed, no detailed session saved.",
+    "history.noSession": "No session recorded.",
+    "history.completed": "Completed",
+    "history.notCompleted": "Not completed",
+    "history.updated": "Updated {date}",
+    "history.noUpdate": "No update time saved",
+    "history.details": "{setsCompleted} / {setsTotal} sets, {checksCompleted} / {checksTotal} checks",
+    "history.noDetailSaved": "No detail saved",
+    "history.monitoring": "Monitoring: {completed} / {total} complete",
+    "history.immediate": "Immediate",
+    "history.nextMorning": "Next morning",
+    "history.walking": "Walking",
+    "history.done": "Done",
+    "history.notDone": "Not done",
+    "history.noNotes": "No notes saved."
+  },
+  th: {
+    "meta.description": "ตัวติดตามการฟื้นฟูเข่าที่บ้านรายวัน พร้อมรายการตรวจสอบการออกกำลังกาย ความคืบหน้า การตรวจความปลอดภัย และบันทึก",
+    "site.title": "ตัวติดตามการฟื้นฟูเข่า",
+    "site.eyebrow": "การฟื้นฟูที่บ้าน",
+    "site.subtitle": "แผนฟื้นฟูที่บ้านรายวันและรายการตรวจสอบความปลอดภัย",
+    "language.selection": "เลือกภาษา",
+    "session.summary": "สรุปเซสชัน",
+    "session.today": "เซสชันวันนี้",
+    "session.loadingDate": "กำลังโหลดวันที่...",
+    "session.lastUpdated": "อัปเดตล่าสุด",
+    "session.notStartedYet": "ยังไม่ได้เริ่ม",
+    "timer.groupLabel": "ตัวจับเวลาเซสชัน",
+    "timer.label": "ตัวจับเวลาเซสชัน",
+    "timer.start": "เริ่ม",
+    "timer.pause": "พัก",
+    "timer.resume": "ทำต่อ",
+    "timer.reset": "รีเซ็ต",
+    "timer.resetConfirm": "รีเซ็ตตัวจับเวลาเซสชันหรือไม่? รายการตรวจสอบและบันทึกจะยังคงถูกบันทึกไว้",
+    "voice.groupLabel": "การตั้งค่าเสียงเตือน",
+    "voice.toggle": "เสียงเตือน",
+    "voice.on": "เปิดเสียงเตือน",
+    "voice.off": "ปิดเสียงเตือน",
+    "progress.heading": "ความคืบหน้า",
+    "progress.text": "ความคืบหน้า: <span id=\"completed-count\">{completed}</span> / <span id=\"total-count\">{total}</span> เสร็จแล้ว",
+    "exercise.progressHeading": "ความคืบหน้าการออกกำลังกาย",
+    "exercise.progressMeta": "เซ็ตและการตรวจเทคนิค",
+    "exercise.wall": "Wall Sit",
+    "exercise.slr": "Straight Leg Raise",
+    "exercise.bridge": "Glute Bridges",
+    "exercise.clam": "Clamshells",
+    "progress.sets": "<span id=\"{id}-progress-sets\">{value}</span> เซ็ต",
+    "progress.checks": "<span id=\"{id}-progress-checks\">{value}</span> รายการตรวจ",
+    "status.finished": "เสร็จแล้ว",
+    "status.inProgress": "กำลังทำ",
+    "status.notStarted": "ยังไม่ได้เริ่ม",
+    "status.noDetail": "ไม่มีรายละเอียด",
+    "calendar.meta": "ปฏิทินการทำครบ",
+    "calendar.heading": "ความคืบหน้ารายเดือน",
+    "calendar.navLabel": "นำทางเดือนในปฏิทิน",
+    "calendar.previous": "เดือนก่อนหน้า",
+    "calendar.next": "เดือนถัดไป",
+    "calendar.loading": "กำลังโหลด...",
+    "calendar.weekdays": ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."],
+    "calendar.markToday": "ทำเครื่องหมายว่าวันนี้เสร็จแล้ว",
+    "calendar.todayCompleted": "วันนี้เสร็จแล้ว",
+    "calendar.selectedDay": "วันที่เลือก",
+    "calendar.selectDate": "เลือกวันที่",
+    "calendar.markComplete": "ทำเครื่องหมายว่าเสร็จแล้ว",
+    "calendar.unmarkComplete": "ยกเลิกเครื่องหมายเสร็จแล้ว",
+    "calendar.completedAria": ", เสร็จแล้ว",
+    "plan.heading": "แผนฟื้นฟูรายวัน",
+    "plan.description": "ทำท่าเหล่านี้ทุกวันตั้งแต่วันนี้จนถึงการทำกายภาพบำบัดครั้งถัดไป",
+    "summary.volume": "ปริมาณ / จำนวนครั้ง",
+    "summary.timing": "เวลาที่แนะนำ",
+    "summary.focus": "จุดเน้นหลัก",
+    "summary.wall.title": "1. Wall Sit <span>(มุมตื้น)</span>",
+    "summary.wall.volume": "ค้าง 30 วินาที × 10 ครั้ง <br><strong>รวม: 2 เซ็ต</strong>",
+    "summary.wall.timing": "หลังกลับถึงหอพัก / ก่อนนอน",
+    "summary.wall.focus": "รักษาการลงน้ำหนัก 50:50 ระหว่างขาทั้งสองข้าง",
+    "summary.slr.title": "2. Straight Leg Raise <span>(SLR)</span>",
+    "summary.slr.volume": "ค้าง 5 วินาที × 15 ครั้ง <br><strong>รวม: 3 เซ็ต</strong>",
+    "summary.slr.timing": "ระหว่างพักผ่อน / ตอนดูไฮไลต์บาสเกตบอล",
+    "summary.slr.focus": "หมุนปลายเท้าออก 15° เพื่อกระตุ้นกล้ามเนื้อต้นขาด้านใน (<strong>VMO</strong>)",
+    "summary.bridge.title": "3. Glute Bridges",
+    "summary.bridge.volume": "15 ครั้ง <br><strong>รวม: 2 เซ็ต</strong>",
+    "summary.bridge.timing": "หลัง Wall Sit หรือก่อนนอน",
+    "summary.bridge.focus": "บีบกล้ามเนื้อก้นเพื่อยกสะโพก โดยไม่แอ่นหลังส่วนล่าง",
+    "summary.clam.title": "4. Clamshells",
+    "summary.clam.volume": "ข้างละ 15 ครั้ง <br><strong>รวม: 2 เซ็ต</strong>",
+    "summary.clam.timing": "หลัง Glute Bridges หรือระหว่างพักผ่อน",
+    "summary.clam.focus": "ให้สะโพกซ้อนกันและขยับจากสะโพกด้านนอก โดยไม่กลิ้งตัวไปด้านหลัง",
+    "section.wall.title": "ท่าที่ 1: Wall Sit",
+    "section.wall.subtitle": "ปกป้องข้อและปรับสมดุล",
+    "section.slr.title": "ท่าที่ 2: Straight Leg Raise",
+    "section.slr.subtitle": "ล็อกเข่าและกระตุ้น VMO",
+    "section.bridge.title": "ท่าที่ 3: Glute Bridges",
+    "section.bridge.subtitle": "แรงขับจากสะโพกและการกระตุ้นกล้ามเนื้อก้น",
+    "section.clam.title": "ท่าที่ 4: Clamshells",
+    "section.clam.subtitle": "ควบคุมสะโพกด้านนอกและแนวเข่า",
+    "section.monitoring.title": "การติดตามหลังฟื้นฟู",
+    "section.monitoring.subtitle": "ตรวจการตอบสนองภายหลัง",
+    "checklist.hide": "ซ่อนรายการตรวจ",
+    "checklist.show": "แสดงรายการตรวจ",
+    "sets.wall": "เซ็ต Wall Sit",
+    "sets.slr": "เซ็ต Straight Leg Raise",
+    "sets.bridge": "เซ็ต Glute Bridge",
+    "sets.clam": "เซ็ต Clamshell",
+    "sets.count": "<span id=\"{id}-set-count\">{count}</span> / <span id=\"{id}-set-total\">{total}</span> เซ็ต",
+    "sets.reset": "รีเซ็ตเซ็ต",
+    "set.label": "เซ็ต {number}",
+    "set.startLabel": "เริ่ม {exercise} เซ็ต {number}",
+    "set.pauseLabel": "พัก {exercise} เซ็ต {number}",
+    "set.done": "เสร็จ",
+    "set.doneAria": "{exercise} เซ็ต {number} เสร็จแล้ว",
+    "set.reps": "{count} ครั้ง",
+    "set.repsPerSide": "ข้างละ {count} ครั้ง",
+    "set.repsDone": "{count} ครั้งเสร็จแล้ว",
+    "set.activeRep": "ครั้งที่ {current}/{total}",
+    "set.activeHoldRep": "ค้างไว้! - ครั้งที่ {current}/{total}",
+    "set.resting": "{cue}...",
+    "cue.hold": "ค้างไว้",
+    "cue.resting": "พัก",
+    "cue.relax": "ผ่อนคลาย",
+    "cue.lift": "ยก",
+    "cue.open": "เปิด",
+    "cue.setComplete": "เซ็ตเสร็จแล้ว",
+    "check.wall.setup": "<strong>การจัดท่า:</strong> หลังส่วนบนและสะโพกแนบผนัง ห้ามเอนตัวหรือถ่ายน้ำหนักสะโพกไปข้างใดข้างหนึ่ง",
+    "check.wall.angle": "<strong>มุมเข่า:</strong> เลื่อนตัวลงเป็นมุมตื้น (<strong>เฉพาะ 30°-45°</strong>) ห้ามลงลึกถึงท่าสควอต 90° ให้เข่าอยู่หลังปลายเท้า",
+    "check.wall.foot": "<strong>ตำแหน่งเท้า:</strong> วางเท้ากว้างเท่าช่วงสะโพก หรือกว้างกว่าเล็กน้อย โดยให้ปลายเท้าชี้ออกเล็กน้อย (15°)",
+    "check.wall.data": "<strong>ตรวจการลงน้ำหนัก:</strong> ตั้งใจกดฝ่าเท้าข้างที่บาดเจ็บลงพื้นให้มั่นคง อย่าให้ขาข้างที่ปกติแย่งรับแรง",
+    "check.wall.safety": "<strong>ตรวจความปลอดภัย:</strong> ระหว่างค้าง 30 วินาที ควรรู้สึกเมื่อยเฉพาะกล้ามเนื้อต้นขา ต้อง<strong>ไม่มีอาการปวดแปลบในข้อ</strong> และ<strong>ไม่มีเสียงคลิก/เสียงเสียดสี</strong>",
+    "check.slr.setup": "<strong>การจัดท่า:</strong> นอนหงายราบบนเตียง งอเข่าข้างที่ปกติเพื่อช่วยให้หลังส่วนล่างมั่นคง",
+    "check.slr.lock": "<strong>ล็อกและหมุน:</strong> เหยียดเข่าข้างที่บาดเจ็บให้ตรงจนสุดจนลูกสะบ้าลอยขึ้น จากนั้นหมุนเท้าทั้งข้างออก 15°",
+    "check.slr.lift": "<strong>จังหวะ - ยก:</strong> ยกขาขึ้นช้า ๆ พร้อมนับ 1-2-3 ให้สูงจากเตียงประมาณ 1 ฟุต / 30 ซม.",
+    "check.slr.hold": "<strong>จังหวะ - ค้าง:</strong> เกร็งและค้างไว้ที่ตำแหน่งบนสุด 5 วินาที",
+    "check.slr.lower": "<strong>จังหวะ - วางลง:</strong> ลดขาลงช้า ๆ พร้อมนับ 3-2-1 อย่าปล่อยขาตกลงแบบหลวม ๆ",
+    "check.slr.data": "<strong>ตรวจการทำงานของกล้ามเนื้อ:</strong> รู้สึกว่ากล้ามเนื้อต้นขาด้านใน (VMO) หดตัว/เมื่อยชัดเจน บริเวณเหนือด้านในของลูกสะบ้า",
+    "check.bridge.setup": "<strong>การจัดท่า:</strong> นอนหงาย งอเข่า วางเท้าราบกับพื้น และแยกเท้ากว้างเท่าช่วงสะโพก",
+    "check.bridge.core": "<strong>แกนกลางลำตัว:</strong> เกร็งหน้าท้องเบา ๆ เพื่อไม่ให้หลังส่วนล่างแอ่นขณะยก",
+    "check.bridge.lift": "<strong>ยก:</strong> กดผ่านส้นเท้าทั้งสองข้างและบีบกล้ามเนื้อก้นจนสะโพกอยู่ในแนวเดียวกับไหล่และเข่า",
+    "check.bridge.safety": "<strong>ตรวจความปลอดภัย:</strong> หยุดหากมีอาการปวดเข่าแปลบ ตะคริวกล้ามเนื้อหลังต้นขาที่ไม่คลาย หรือรู้สึกหนีบที่หลังส่วนล่าง",
+    "check.clam.setup": "<strong>การจัดท่า:</strong> นอนตะแคง งอเข่า เท้าชิดกัน และให้สะโพกซ้อนกัน",
+    "check.clam.stack": "<strong>สะโพกซ้อนกัน:</strong> ให้เชิงกรานอยู่นิ่งและหลีกเลี่ยงการกลิ้งสะโพกด้านบนไปด้านหลัง",
+    "check.clam.control": "<strong>การควบคุม:</strong> ยกเข่าด้านบนขึ้นช้า ๆ หยุดค้างสั้น ๆ แล้วลดลงอย่างควบคุม โดยให้เท้ายังคงชิดกัน",
+    "check.clam.safety": "<strong>ตรวจความปลอดภัย:</strong> หยุดหากเข่าบิด รู้สึกหนีบ หรือรู้สึกไม่มั่นคงระหว่างเคลื่อนไหว",
+    "monitoring.reminder": "หยุดและทำตามคำแนะนำของนักกายภาพบำบัด หากมีอาการปวดข้อแบบแปลบ บวมมากขึ้น หรือมีเสียงคลิก/เสียงเสียดสีระหว่างเซสชัน",
+    "check.monitor.immediate": "<strong>ทันทีหลังทำเสร็จ:</strong> ข้อเข่ารู้สึกมั่นคง และไม่มีอาการตุบ ๆ หรือปวดแปลบเพิ่มขึ้น",
+    "check.monitor.morning": "<strong>ตรวจเช้าวันถัดไป:</strong> เข่าไม่บวม ไม่ตึง และไม่ฝืด",
+    "check.monitor.walking": "<strong>ตรวจการเดิน:</strong> การเดินปกติบนพื้นราบรู้สึกลื่นไหลและไม่เจ็บ",
+    "notes.heading": "บันทึกเซสชัน",
+    "notes.description": "บันทึกเพิ่มเติมเกี่ยวกับอาการปวด บวม ตึง หรือสิ่งที่ต้องแจ้งนักกายภาพบำบัด",
+    "notes.label": "บันทึก",
+    "notes.placeholder": "ตัวอย่าง: รู้สึกเมื่อยกล้ามเนื้อต้นขาเล็กน้อยเท่านั้น ไม่มีอาการปวดข้อ เข่ารู้สึกปกติในเช้าวันถัดไป",
+    "notes.clear": "ล้างบันทึก",
+    "notes.clearConfirm": "ล้างบันทึกเซสชันหรือไม่? ความคืบหน้ารายการตรวจสอบจะยังคงถูกบันทึกไว้",
+    "footer.resetChecklist": "รีเซ็ตรายการตรวจ",
+    "footer.resetAllSets": "รีเซ็ตทุกเซ็ต",
+    "footer.note": "ตัวติดตามนี้มีไว้สำหรับทำตามแผนฟื้นฟูที่ได้รับ ไม่สามารถใช้แทนคำแนะนำทางการแพทย์ได้",
+    "reset.checklistConfirm": "รีเซ็ตรายการตรวจทั้งหมดหรือไม่? บันทึกของคุณจะยังคงอยู่",
+    "reset.exerciseSetsConfirm": "รีเซ็ตแถวเซ็ตของ {exercise} หรือไม่? รายการตรวจ บันทึก และตัวจับเวลาเซสชันจะยังคงถูกบันทึกไว้",
+    "reset.allSetsConfirm": "รีเซ็ตแถวเซ็ตการออกกำลังกายทั้งหมดหรือไม่? รายการตรวจ บันทึก และตัวจับเวลาเซสชันจะยังคงถูกบันทึกไว้",
+    "history.heading": "ประวัติเซสชัน",
+    "history.selectDate": "เลือกวันที่เพื่อดูความคืบหน้าที่บันทึกไว้",
+    "history.completedNoDetail": "เสร็จแล้ว แต่ไม่มีรายละเอียดเซสชันที่บันทึกไว้",
+    "history.noSession": "ยังไม่มีการบันทึกเซสชัน",
+    "history.completed": "เสร็จแล้ว",
+    "history.notCompleted": "ยังไม่เสร็จ",
+    "history.updated": "อัปเดต {date}",
+    "history.noUpdate": "ไม่มีเวลาที่บันทึกไว้",
+    "history.details": "{setsCompleted} / {setsTotal} เซ็ต, {checksCompleted} / {checksTotal} รายการตรวจ",
+    "history.noDetailSaved": "ไม่มีรายละเอียดที่บันทึกไว้",
+    "history.monitoring": "การติดตาม: {completed} / {total} เสร็จแล้ว",
+    "history.immediate": "ทันทีหลังทำเสร็จ",
+    "history.nextMorning": "เช้าวันถัดไป",
+    "history.walking": "การเดิน",
+    "history.done": "เสร็จ",
+    "history.notDone": "ยังไม่เสร็จ",
+    "history.noNotes": "ไม่มีบันทึกที่บันทึกไว้"
+  }
+};
+
+const STATIC_TRANSLATION_SELECTORS = [
+  { selector: 'meta[name="description"]', key: "meta.description", attr: "content" },
+  { selector: ".eyebrow", key: "site.eyebrow" },
+  { selector: ".subtitle", key: "site.subtitle" },
+  { selector: "#language-switcher", key: "language.selection", attr: "aria-label" },
+  { selector: ".session-panel", key: "session.summary", attr: "aria-label" },
+  { selector: ".session-panel > div:nth-child(1) .meta-label", key: "session.today" },
+  { selector: ".session-panel > div:nth-child(2) .meta-label", key: "session.lastUpdated" },
+  { selector: ".timer-panel", key: "timer.groupLabel", attr: "aria-label" },
+  { selector: ".timer-panel > .meta-label", key: "timer.label" },
+  { selector: "#timer-reset", key: "timer.reset" },
+  { selector: ".voice-cue-panel", key: "voice.groupLabel", attr: "aria-label" },
+  { selector: ".voice-cue-toggle span", key: "voice.toggle" },
+  { selector: "#progress-heading", key: "progress.heading" },
+  { selector: "#exercise-progress-heading", key: "exercise.progressHeading" },
+  { selector: ".exercise-progress-header .meta-label", key: "exercise.progressMeta" },
+  { selector: '[data-exercise-progress="wall"] strong', key: "exercise.wall" },
+  { selector: '[data-exercise-progress="slr"] strong', key: "exercise.slr" },
+  { selector: '[data-exercise-progress="bridge"] strong', key: "exercise.bridge" },
+  { selector: '[data-exercise-progress="clam"] strong', key: "exercise.clam" },
+  { selector: ".calendar-header .meta-label", key: "calendar.meta" },
+  { selector: "#calendar-heading", key: "calendar.heading" },
+  { selector: ".calendar-nav", key: "calendar.navLabel", attr: "aria-label" },
+  { selector: "#calendar-prev", key: "calendar.previous", attr: "aria-label" },
+  { selector: "#calendar-next", key: "calendar.next", attr: "aria-label" },
+  { selector: ".selected-day-panel .meta-label", key: "calendar.selectedDay" },
+  { selector: "#daily-plan-heading", key: "plan.heading" },
+  { selector: "#daily-plan-heading + p", key: "plan.description" },
+  { selector: ".exercise-summary:nth-of-type(1) h3", key: "summary.wall.title", html: true },
+  { selector: ".exercise-summary:nth-of-type(2) h3", key: "summary.slr.title", html: true },
+  { selector: ".exercise-summary:nth-of-type(3) h3", key: "summary.bridge.title", html: true },
+  { selector: ".exercise-summary:nth-of-type(4) h3", key: "summary.clam.title", html: true },
+  { selector: ".exercise-summary dl > div:nth-child(1) dt", key: "summary.volume" },
+  { selector: ".exercise-summary dl > div:nth-child(2) dt", key: "summary.timing" },
+  { selector: ".exercise-summary dl > div:nth-child(3) dt", key: "summary.focus" },
+  { selector: ".exercise-summary:nth-of-type(1) dl > div:nth-child(1) dd", key: "summary.wall.volume", html: true },
+  { selector: ".exercise-summary:nth-of-type(1) dl > div:nth-child(2) dd", key: "summary.wall.timing" },
+  { selector: ".exercise-summary:nth-of-type(1) dl > div:nth-child(3) dd", key: "summary.wall.focus" },
+  { selector: ".exercise-summary:nth-of-type(2) dl > div:nth-child(1) dd", key: "summary.slr.volume", html: true },
+  { selector: ".exercise-summary:nth-of-type(2) dl > div:nth-child(2) dd", key: "summary.slr.timing" },
+  { selector: ".exercise-summary:nth-of-type(2) dl > div:nth-child(3) dd", key: "summary.slr.focus", html: true },
+  { selector: ".exercise-summary:nth-of-type(3) dl > div:nth-child(1) dd", key: "summary.bridge.volume", html: true },
+  { selector: ".exercise-summary:nth-of-type(3) dl > div:nth-child(2) dd", key: "summary.bridge.timing" },
+  { selector: ".exercise-summary:nth-of-type(3) dl > div:nth-child(3) dd", key: "summary.bridge.focus" },
+  { selector: ".exercise-summary:nth-of-type(4) dl > div:nth-child(1) dd", key: "summary.clam.volume", html: true },
+  { selector: ".exercise-summary:nth-of-type(4) dl > div:nth-child(2) dd", key: "summary.clam.timing" },
+  { selector: ".exercise-summary:nth-of-type(4) dl > div:nth-child(3) dd", key: "summary.clam.focus" },
+  { selector: "#wall-sit-heading", key: "section.wall.title" },
+  { selector: "#wall-sit-heading + p", key: "section.wall.subtitle" },
+  { selector: "#slr-heading", key: "section.slr.title" },
+  { selector: "#slr-heading + p", key: "section.slr.subtitle" },
+  { selector: "#bridge-heading", key: "section.bridge.title" },
+  { selector: "#bridge-heading + p", key: "section.bridge.subtitle" },
+  { selector: "#clam-heading", key: "section.clam.title" },
+  { selector: "#clam-heading + p", key: "section.clam.subtitle" },
+  { selector: "#monitoring-heading", key: "section.monitoring.title" },
+  { selector: "#monitoring-heading + p", key: "section.monitoring.subtitle" },
+  { selector: "#wall-set-heading", key: "sets.wall" },
+  { selector: "#slr-set-heading", key: "sets.slr" },
+  { selector: "#bridge-set-heading", key: "sets.bridge" },
+  { selector: "#clam-set-heading", key: "sets.clam" },
+  { selector: '[id$="-set-reset"]', key: "sets.reset" },
+  { selector: 'label[for="wall-setup"]', key: "check.wall.setup", html: true },
+  { selector: 'label[for="wall-angle"]', key: "check.wall.angle", html: true },
+  { selector: 'label[for="wall-foot-position"]', key: "check.wall.foot", html: true },
+  { selector: 'label[for="wall-data-check"]', key: "check.wall.data", html: true },
+  { selector: 'label[for="wall-safety-check"]', key: "check.wall.safety", html: true },
+  { selector: 'label[for="slr-setup"]', key: "check.slr.setup", html: true },
+  { selector: 'label[for="slr-lock-twist"]', key: "check.slr.lock", html: true },
+  { selector: 'label[for="slr-tempo-lift"]', key: "check.slr.lift", html: true },
+  { selector: 'label[for="slr-tempo-hold"]', key: "check.slr.hold", html: true },
+  { selector: 'label[for="slr-tempo-lower"]', key: "check.slr.lower", html: true },
+  { selector: 'label[for="slr-data-check"]', key: "check.slr.data", html: true },
+  { selector: 'label[for="bridge-setup"]', key: "check.bridge.setup", html: true },
+  { selector: 'label[for="bridge-core"]', key: "check.bridge.core", html: true },
+  { selector: 'label[for="bridge-lift"]', key: "check.bridge.lift", html: true },
+  { selector: 'label[for="bridge-safety-check"]', key: "check.bridge.safety", html: true },
+  { selector: 'label[for="clam-setup"]', key: "check.clam.setup", html: true },
+  { selector: 'label[for="clam-hip-stack"]', key: "check.clam.stack", html: true },
+  { selector: 'label[for="clam-control"]', key: "check.clam.control", html: true },
+  { selector: 'label[for="clam-safety-check"]', key: "check.clam.safety", html: true },
+  { selector: ".safety-reminder", key: "monitoring.reminder" },
+  { selector: 'label[for="monitor-immediate"]', key: "check.monitor.immediate", html: true },
+  { selector: 'label[for="monitor-next-morning"]', key: "check.monitor.morning", html: true },
+  { selector: 'label[for="monitor-walking"]', key: "check.monitor.walking", html: true },
+  { selector: "#notes-heading", key: "notes.heading" },
+  { selector: "#notes-heading + p", key: "notes.description" },
+  { selector: ".notes-label", key: "notes.label" },
+  { selector: "#clear-notes", key: "notes.clear" },
+  { selector: "#reset-checklist", key: "footer.resetChecklist" },
+  { selector: "#reset-all-sets", key: "footer.resetAllSets" },
+  { selector: ".footer-note", key: "footer.note" }
+];
+
+const isSupportedLanguage = (language) => SUPPORTED_LANGUAGES.includes(language);
+
+const getStoredLanguage = () => {
+  const storedLanguage = localStorage.getItem(STORAGE_KEYS.language);
+  return isSupportedLanguage(storedLanguage) ? storedLanguage : null;
+};
+
+const getBrowserLanguagePreference = () => {
+  const language = window.navigator?.language?.slice(0, 2);
+  return isSupportedLanguage(language) ? language : DEFAULT_LANGUAGE;
+};
+
+const getInitialLanguage = () => getStoredLanguage() || getBrowserLanguagePreference();
+
+const getCurrentLanguage = () => currentLanguage;
+
+const getCurrentLocale = () => currentLanguage === "th" ? "th-TH" : "en-US";
+
+const interpolate = (template, values = {}) => Object.entries(values)
+  .reduce((result, [key, value]) => result.replaceAll(`{${key}}`, String(value)), template);
+
+const t = (key, values = {}) => {
+  const dictionary = translations[currentLanguage] || translations[DEFAULT_LANGUAGE];
+  const fallbackDictionary = translations[DEFAULT_LANGUAGE];
+  const value = dictionary[key] ?? fallbackDictionary[key] ?? key;
+
+  if (Array.isArray(value)) return value;
+  return interpolate(value, values);
+};
+
+const getExerciseLabel = (exerciseId) => t(`exercise.${exerciseId}`);
+
+const getStatusKey = (status) => {
+  if (status === "Finished" || status === "finished") return "status.finished";
+  if (status === "In progress" || status === "in-progress") return "status.inProgress";
+  if (status === "Not started" || status === "not-started") return "status.notStarted";
+  return "status.noDetail";
+};
+
+const translateWithAttributes = () => {
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+  });
+};
+
+const translateStaticSelectors = () => {
+  STATIC_TRANSLATION_SELECTORS.forEach((item) => {
+    document.querySelectorAll(item.selector).forEach((element) => {
+      const value = t(item.key);
+      if (item.attr) {
+        element.setAttribute(item.attr, value);
+      } else if (item.html) {
+        element.innerHTML = value;
+      } else {
+        element.textContent = value;
+      }
+    });
+  });
+};
+
+const translateWeekdays = () => {
+  const weekdays = t("calendar.weekdays");
+  document.querySelectorAll(".calendar-weekdays span").forEach((element, index) => {
+    element.textContent = weekdays[index] || element.textContent;
+  });
+};
+
+const translateProgressSummary = () => {
+  const completed = document.getElementById("completed-count")?.textContent || "0";
+  const total = document.getElementById("total-count")?.textContent || String(checklistItems.length);
+  const progressText = document.getElementById("progress-text");
+  if (progressText) {
+    progressText.innerHTML = t("progress.text", { completed: completed, total: total });
+  }
+
+  exerciseProgressGroups.forEach((group) => {
+    const sets = document.getElementById(`${group.id}-progress-sets`)?.textContent || `0 / ${group.setIds.length}`;
+    const checks = document.getElementById(`${group.id}-progress-checks`)?.textContent || `0 / ${group.checkIds.length}`;
+    const setsWrapper = document.getElementById(`${group.id}-progress-sets`)?.parentElement;
+    const checksWrapper = document.getElementById(`${group.id}-progress-checks`)?.parentElement;
+
+    if (setsWrapper) setsWrapper.innerHTML = t("progress.sets", { id: group.id, value: sets });
+    if (checksWrapper) checksWrapper.innerHTML = t("progress.checks", { id: group.id, value: checks });
+  });
+};
+
+const translateSetStaticText = () => {
+  exerciseSetTrackers.forEach((tracker) => {
+    const count = document.getElementById(`${tracker.id}-set-count`)?.textContent || "0";
+    const total = document.getElementById(`${tracker.id}-set-total`)?.textContent || String(tracker.totalSets);
+    const countWrapper = document.getElementById(`${tracker.id}-set-count`)?.parentElement;
+    if (countWrapper) {
+      countWrapper.innerHTML = t("sets.count", {
+        id: tracker.id,
+        count: count,
+        total: total
+      });
+    }
+
+    tracker.sets.forEach((set, index) => {
+      const number = String(index + 1);
+      const setNumber = getSetRowControl(set.id, "number", ".set-number");
+      const doneLabel = getSetRowControl(set.id, "done", 'input[type="checkbox"]')?.closest(".set-done");
+      const doneText = doneLabel?.querySelector("span");
+      const doneInput = getSetRowControl(set.id, "done", 'input[type="checkbox"]');
+
+      if (setNumber) setNumber.setAttribute("aria-label", t("set.label", { number: number }));
+      if (doneText) doneText.textContent = t("set.done");
+      if (doneInput) {
+        doneInput.setAttribute("aria-label", t("set.doneAria", {
+          exercise: getExerciseLabel(tracker.id),
+          number: number
+        }));
+      }
+    });
+  });
+};
+
+const translateChecklistToggles = () => {
+  document.querySelectorAll(".checklist-toggle[aria-controls]").forEach((toggle) => {
+    const checklistId = toggle.getAttribute("aria-controls");
+    const checklist = checklistId ? document.getElementById(checklistId) : null;
+    toggle.textContent = checklist?.hidden ? t("checklist.show") : t("checklist.hide");
+  });
+};
+
+const applyTranslations = () => {
+  document.documentElement.setAttribute("lang", currentLanguage);
+  document.title = t("site.title");
+  translateWithAttributes();
+  translateStaticSelectors();
+  translateWeekdays();
+  translateProgressSummary();
+  translateSetStaticText();
+  translateChecklistToggles();
+};
+
+const updateLanguageButtons = () => {
+  document.querySelectorAll("[data-language-option]").forEach((button) => {
+    const isSelected = button.dataset.languageOption === currentLanguage;
+    button.setAttribute("aria-pressed", String(isSelected));
+    button.classList.toggle("is-active", isSelected);
+  });
+};
+
+const refreshLocalizedDynamicText = () => {
+  if (document.getElementById("session-date") && document.getElementById("last-updated")) {
+    setupSessionMeta();
+  }
+  renderTimer();
+  renderVoiceCueControl();
+  if (
+    document.getElementById("completed-count") &&
+    document.getElementById("total-count") &&
+    document.getElementById("progress-fill")
+  ) {
+    updateProgress();
+  }
+  if (document.getElementById("wall-set-count")) {
+    renderSetRows();
+  }
+  if (document.getElementById("calendar-grid")) {
+    renderCalendar();
+  }
+  if (document.getElementById("session-history-panel")) {
+    renderSessionHistory();
+  }
+};
+
+const setLanguage = (language) => {
+  if (!isSupportedLanguage(language)) return;
+
+  currentLanguage = language;
+  localStorage.setItem(STORAGE_KEYS.language, language);
+  applyTranslations();
+  updateLanguageButtons();
+  refreshLocalizedDynamicText();
+};
+
+const setupLanguageSwitcher = () => {
+  currentLanguage = getInitialLanguage();
+  applyTranslations();
+  updateLanguageButtons();
+
+  document.querySelectorAll("[data-language-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setLanguage(button.dataset.languageOption);
+    });
+  });
 };
 
 const DEFAULT_COMPLETED_DATES = [
@@ -182,10 +802,10 @@ const setRowState = {
 };
 
 const formatDateTime = (value) => {
-  if (!value) return "Not started yet";
+  if (!value) return t("session.notStartedYet");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not started yet";
-  return new Intl.DateTimeFormat(undefined, {
+  if (Number.isNaN(date.getTime())) return t("session.notStartedYet");
+  return new Intl.DateTimeFormat(getCurrentLocale(), {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(date);
@@ -220,8 +840,8 @@ const createDateFromKey = (dateKey) => {
 
 const formatDisplayDate = (dateKey) => {
   const date = createDateFromKey(dateKey);
-  if (!date) return "Select a date";
-  return new Intl.DateTimeFormat(undefined, {
+  if (!date) return t("calendar.selectDate");
+  return new Intl.DateTimeFormat(getCurrentLocale(), {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -293,13 +913,15 @@ const getExerciseProgressStats = (group) => {
   const totalChecks = group.checkIds.length;
   const isFinished = completedSets === totalSets && completedChecks === totalChecks;
   const hasStarted = completedSets > 0 || completedChecks > 0;
+  const statusKey = isFinished ? "status.finished" : hasStarted ? "status.inProgress" : "status.notStarted";
 
   return {
     completedSets: completedSets,
     completedChecks: completedChecks,
     totalSets: totalSets,
     totalChecks: totalChecks,
-    status: isFinished ? "Finished" : hasStarted ? "In progress" : "Not started",
+    statusKey: statusKey,
+    status: t(statusKey),
     statusClass: isFinished ? "finished" : hasStarted ? "in-progress" : "not-started",
     isFinished: isFinished
   };
@@ -458,7 +1080,11 @@ const renderTimer = () => {
   }
 
   if (timerToggle) {
-    timerToggle.textContent = timerState.isRunning ? "Pause" : currentElapsedMs > 0 ? "Resume" : "Start";
+    timerToggle.textContent = timerState.isRunning
+      ? t("timer.pause")
+      : currentElapsedMs > 0
+        ? t("timer.resume")
+        : t("timer.start");
   }
 };
 
@@ -497,7 +1123,7 @@ const toggleTimer = () => {
 };
 
 const resetTimer = () => {
-  const shouldReset = window.confirm("Reset the session timer? Your checklist and notes will stay saved.");
+  const shouldReset = window.confirm(t("timer.resetConfirm"));
   if (!shouldReset) return;
 
   clearTimerInterval();
@@ -641,8 +1267,9 @@ const getExerciseHistorySnapshot = () => exerciseProgressGroups.reduce((exercise
   const stats = getExerciseProgressStats(group);
 
   exercises[group.id] = {
-    label: group.label,
+    label: getExerciseLabel(group.id),
     status: stats.status,
+    statusKey: stats.statusKey,
     completedSets: stats.completedSets,
     totalSets: stats.totalSets,
     completedChecks: stats.completedChecks,
@@ -715,18 +1342,24 @@ const renderExerciseHistory = (container, exercises) => {
     row.className = "history-exercise-row";
 
     const name = document.createElement("strong");
-    name.textContent = group.label;
+    name.textContent = getExerciseLabel(group.id);
 
     const details = document.createElement("span");
     details.textContent = exercise
-      ? `${exercise.completedSets || 0} / ${exercise.totalSets || group.setIds.length} sets, ${exercise.completedChecks || 0} / ${exercise.totalChecks || group.checkIds.length} checks`
-      : "No detail saved";
+      ? t("history.details", {
+        setsCompleted: exercise.completedSets || 0,
+        setsTotal: exercise.totalSets || group.setIds.length,
+        checksCompleted: exercise.completedChecks || 0,
+        checksTotal: exercise.totalChecks || group.checkIds.length
+      })
+      : t("history.noDetailSaved");
 
     const status = document.createElement("span");
     status.className = "history-status-badge";
-    status.textContent = exercise?.status || "No detail";
+    const statusKey = exercise?.statusKey || getStatusKey(exercise?.status);
+    status.textContent = exercise ? t(statusKey) : t("status.noDetail");
     status.classList.add(
-      exercise?.status === "Finished" ? "finished" : exercise?.status === "In progress" ? "in-progress" : "not-started"
+      statusKey === "status.finished" ? "finished" : statusKey === "status.inProgress" ? "in-progress" : "not-started"
     );
 
     row.append(name, details, status);
@@ -738,18 +1371,21 @@ const renderExerciseHistory = (container, exercises) => {
 
 const renderMonitoringHistory = (container, monitoring) => {
   const monitoringItems = [
-    ["Immediate", monitoring?.immediate],
-    ["Next morning", monitoring?.nextMorning],
-    ["Walking", monitoring?.walking]
+    [t("history.immediate"), monitoring?.immediate],
+    [t("history.nextMorning"), monitoring?.nextMorning],
+    [t("history.walking"), monitoring?.walking]
   ];
   const completedCount = monitoringItems.filter((item) => item[1] === true).length;
-  const summary = createHistoryText(`Monitoring: ${completedCount} / ${monitoringItems.length} complete`, "history-summary");
+  const summary = createHistoryText(t("history.monitoring", {
+    completed: completedCount,
+    total: monitoringItems.length
+  }), "history-summary");
   const list = document.createElement("ul");
   list.className = "history-monitoring-list";
 
   monitoringItems.forEach(([label, isComplete]) => {
     const item = document.createElement("li");
-    item.textContent = `${label}: ${isComplete ? "Done" : "Not done"}`;
+    item.textContent = `${label}: ${isComplete ? t("history.done") : t("history.notDone")}`;
     list.appendChild(item);
   });
 
@@ -764,26 +1400,26 @@ const renderSessionHistory = () => {
   panel.replaceChildren();
 
   const heading = document.createElement("h3");
-  heading.textContent = "Session History";
+  heading.textContent = t("history.heading");
   panel.appendChild(heading);
 
   if (!dateKey) {
-    panel.appendChild(createHistoryText("Select a date to see saved progress.", "history-empty"));
+    panel.appendChild(createHistoryText(t("history.selectDate"), "history-empty"));
     return;
   }
 
   const record = calendarState.sessionHistory[dateKey];
   if (!record) {
     const message = calendarState.completedDates.has(dateKey)
-      ? "Completed, no detailed session saved."
-      : "No session recorded.";
+      ? t("history.completedNoDetail")
+      : t("history.noSession");
     panel.appendChild(createHistoryText(message, "history-empty"));
     return;
   }
 
-  const completionText = record.completed ? "Completed" : "Not completed";
-  const updatedText = record.updatedAt ? formatDateTime(record.updatedAt) : "No update time saved";
-  panel.appendChild(createHistoryText(`${completionText} • Updated ${updatedText}`, "history-summary"));
+  const completionText = record.completed ? t("history.completed") : t("history.notCompleted");
+  const updatedText = record.updatedAt ? formatDateTime(record.updatedAt) : t("history.noUpdate");
+  panel.appendChild(createHistoryText(`${completionText} - ${t("history.updated", { date: updatedText })}`, "history-summary"));
 
   renderExerciseHistory(panel, record.exercises);
   renderMonitoringHistory(panel, record.monitoring);
@@ -791,9 +1427,9 @@ const renderSessionHistory = () => {
   const notes = document.createElement("div");
   notes.className = "history-notes";
   const notesLabel = document.createElement("strong");
-  notesLabel.textContent = "Notes";
+  notesLabel.textContent = t("notes.label");
   const notesText = document.createElement("p");
-  notesText.textContent = record.notes?.trim() || "No notes saved.";
+  notesText.textContent = record.notes?.trim() || t("history.noNotes");
   notes.append(notesLabel, notesText);
   panel.appendChild(notes);
 };
@@ -834,7 +1470,7 @@ const renderSelectedDay = () => {
   const dateKey = calendarState.selectedDateKey;
 
   if (selectedDate) {
-    selectedDate.textContent = dateKey ? formatDisplayDate(dateKey) : "Select a date";
+    selectedDate.textContent = dateKey ? formatDisplayDate(dateKey) : t("calendar.selectDate");
   }
 
   if (!toggleButton) return;
@@ -843,7 +1479,7 @@ const renderSelectedDay = () => {
   const isCompleted = dateKey ? calendarState.completedDates.has(dateKey) : false;
 
   toggleButton.disabled = !dateKey || isFutureDate;
-  toggleButton.textContent = isCompleted ? "Unmark Complete" : "Mark Complete";
+  toggleButton.textContent = isCompleted ? t("calendar.unmarkComplete") : t("calendar.markComplete");
   renderSessionHistory();
 };
 
@@ -856,7 +1492,7 @@ const renderTodayCompletionButton = () => {
   const canMarkToday = canCompleteToday() && !isComplete;
 
   markTodayButton.disabled = !canMarkToday;
-  markTodayButton.textContent = isComplete ? "Today Completed" : "Mark Today Complete";
+  markTodayButton.textContent = isComplete ? t("calendar.todayCompleted") : t("calendar.markToday");
 };
 
 const renderCalendar = () => {
@@ -871,7 +1507,7 @@ const renderCalendar = () => {
   const todayKey = formatDateKey(new Date());
 
   if (calendarMonth) {
-    calendarMonth.textContent = new Intl.DateTimeFormat(undefined, {
+    calendarMonth.textContent = new Intl.DateTimeFormat(getCurrentLocale(), {
       month: "long",
       year: "numeric"
     }).format(firstDay);
@@ -897,7 +1533,7 @@ const renderCalendar = () => {
     dayButton.type = "button";
     dayButton.className = "calendar-day";
     dayButton.textContent = String(day);
-    dayButton.setAttribute("aria-label", `${formatDisplayDate(dateKey)}${isCompleted ? ", completed" : ""}`);
+    dayButton.setAttribute("aria-label", `${formatDisplayDate(dateKey)}${isCompleted ? t("calendar.completedAria") : ""}`);
     dayButton.setAttribute("aria-pressed", isSelected ? "true" : "false");
     dayButton.classList.toggle("completed", isCompleted);
     dayButton.classList.toggle("today", isToday);
@@ -1068,9 +1704,21 @@ const playAudioCue = (message, frequency = 800, duration = 0.15) => {
   playCueBeep(frequency, duration);
 };
 
-const getWorkCueMessage = (setId) => getSetRowConfig(setId).workCue;
+const getWorkCueKey = (setId) => {
+  const trackerId = setId.split("-")[0];
+  if (trackerId === "bridge") return "cue.lift";
+  if (trackerId === "clam") return "cue.open";
+  return "cue.hold";
+};
 
-const getRestCueMessage = (setId) => getSetRowConfig(setId).restCue;
+const getRestCueKey = (setId) => {
+  const trackerId = setId.split("-")[0];
+  return trackerId === "wall" ? "cue.resting" : "cue.relax";
+};
+
+const getWorkCueMessage = (setId) => t(getWorkCueKey(setId));
+
+const getRestCueMessage = (setId) => t(getRestCueKey(setId));
 
 const playCurrentPhaseCue = (setId) => {
   const state = getSetRowState(setId);
@@ -1092,7 +1740,7 @@ const renderVoiceCueControl = () => {
   const status = document.getElementById("voice-cues-status");
 
   if (toggle) toggle.checked = audioCueState.isEnabled;
-  if (status) status.textContent = audioCueState.isEnabled ? "Voice cues on" : "Voice cues off";
+  if (status) status.textContent = audioCueState.isEnabled ? t("voice.on") : t("voice.off");
 };
 
 const setupVoiceCues = () => {
@@ -1105,7 +1753,7 @@ const setupVoiceCues = () => {
     renderVoiceCueControl();
 
     if (audioCueState.isEnabled) {
-      playAudioCue("Voice cues on", 880, 0.12);
+      playAudioCue(t("voice.on"), 880, 0.12);
     } else if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
@@ -1144,7 +1792,7 @@ const handleRepLoopTick = (setId) => {
         state.currentRep = state.totalReps;
         state.repState = "completed";
         state.timeRemainingSec = 0;
-        playAudioCue("Set complete", 1200, 0.6);
+        playAudioCue(t("cue.setComplete"), 1200, 0.6);
         setRowDone(setId, true);
       }
     } else if (state.repState === "rest") {
@@ -1168,7 +1816,9 @@ const clearSetRowInterval = () => {
 
 const hasRunningSetRow = () => getAllSetRows().some((set) => getSetRowState(set.id)?.isRunning);
 
-const getSetRowElement = (setId) => document.querySelector(`[data-set-row="${setId}"]`);
+const getSetRowElement = (setId) => typeof document.querySelector === "function"
+  ? document.querySelector(`[data-set-row="${setId}"]`)
+  : null;
 
 const getSetRowControl = (setId, suffix, selector) => {
   const row = getSetRowElement(setId);
@@ -1197,13 +1847,16 @@ const renderSetRow = (set) => {
     if (targetSpan) {
       const config = getSetRowConfig(set.id);
       if (rowState.isDone) {
-        targetSpan.textContent = `${rowState.totalReps} reps done`;
+        targetSpan.textContent = t("set.repsDone", { count: rowState.totalReps });
       } else if (rowState.repState === "work") {
-        targetSpan.textContent = `${config.activeTargetPrefix} ${rowState.currentRep}/${rowState.totalReps}`;
+        targetSpan.textContent = t(
+          config.activeTargetPrefix.startsWith("HOLD") ? "set.activeHoldRep" : "set.activeRep",
+          { current: rowState.currentRep, total: rowState.totalReps }
+        );
       } else if (rowState.repState === "rest") {
-        targetSpan.textContent = `${config.restCue}...`;
+        targetSpan.textContent = t("set.resting", { cue: getRestCueMessage(set.id) });
       } else {
-        targetSpan.textContent = `${rowState.totalReps} reps`;
+        targetSpan.textContent = t("set.reps", { count: rowState.totalReps });
       }
     }
   } else {
@@ -1214,7 +1867,12 @@ const renderSetRow = (set) => {
 
   if (toggle) {
     toggle.textContent = rowState.isRunning ? "❚❚" : "▶";
-    toggle.setAttribute("aria-label", `${rowState.isRunning ? "Pause" : "Start"} ${set.id.replace("-", " set ")}`);
+    const trackerId = set.id.split("-")[0];
+    const setNumber = set.id.split("-")[1] || "";
+    toggle.setAttribute("aria-label", t(rowState.isRunning ? "set.pauseLabel" : "set.startLabel", {
+      exercise: getExerciseLabel(trackerId),
+      number: setNumber
+    }));
   }
   if (done) done.checked = rowState.isDone;
 };
@@ -1354,14 +2012,16 @@ const resetExerciseSetRows = (trackerId) => {
   const tracker = exerciseSetTrackers.find((item) => item.id === trackerId);
   if (!tracker) return;
 
-  const shouldReset = window.confirm(`Reset ${tracker.label} set rows? Your checklist, notes, and session timer will stay saved.`);
+  const shouldReset = window.confirm(t("reset.exerciseSetsConfirm", {
+    exercise: getExerciseLabel(tracker.id)
+  }));
   if (!shouldReset) return;
 
   resetSetRowsForTrackers([tracker]);
 };
 
 const resetAllSetRows = () => {
-  const shouldReset = window.confirm("Reset all exercise set rows? Your checklist, notes, and session timer will stay saved.");
+  const shouldReset = window.confirm(t("reset.allSetsConfirm"));
   if (!shouldReset) return;
 
   resetSetRowsForTrackers(exerciseSetTrackers);
@@ -1397,7 +2057,7 @@ const setupNotes = () => {
   });
 
   document.getElementById("clear-notes").addEventListener("click", () => {
-    const shouldClear = window.confirm("Clear session notes? Your checklist progress will stay saved.");
+    const shouldClear = window.confirm(t("notes.clearConfirm"));
     if (!shouldClear) return;
     notes.value = "";
     localStorage.removeItem(STORAGE_KEYS.notes);
@@ -1409,7 +2069,7 @@ const setupNotes = () => {
 
 const setupReset = () => {
   document.getElementById("reset-checklist").addEventListener("click", () => {
-    const shouldReset = window.confirm("Reset all checklist items? Your notes will be kept.");
+    const shouldReset = window.confirm(t("reset.checklistConfirm"));
     if (!shouldReset) return;
 
     getCheckboxes().forEach((checkbox) => {
@@ -1466,7 +2126,7 @@ const saveChecklistCollapse = () => {
 const setChecklistCollapsed = (toggle, checklist, isCollapsed) => {
   checklist.hidden = isCollapsed;
   toggle.setAttribute("aria-expanded", String(!isCollapsed));
-  toggle.textContent = isCollapsed ? "Show Checklist" : "Hide Checklist";
+  toggle.textContent = isCollapsed ? t("checklist.show") : t("checklist.hide");
 };
 
 const setupChecklistCollapse = () => {
@@ -1487,7 +2147,7 @@ const setupChecklistCollapse = () => {
 };
 
 const setupSessionMeta = () => {
-  document.getElementById("session-date").textContent = new Intl.DateTimeFormat(undefined, {
+  document.getElementById("session-date").textContent = new Intl.DateTimeFormat(getCurrentLocale(), {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -1500,6 +2160,7 @@ const setupSessionMeta = () => {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupLanguageSwitcher();
   setupSessionMeta();
   setupCalendar();
   restoreChecklist();
