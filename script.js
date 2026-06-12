@@ -31,7 +31,8 @@ const STORAGE_KEYS = {
   sets: "kneeRehabSetRowState",
   completedDates: "kneeRehabCompletedDates",
   sessionHistory: "kneeRehabSessionHistory",
-  voiceCuesEnabled: "kneeRehabVoiceCuesEnabled"
+  voiceCuesEnabled: "kneeRehabVoiceCuesEnabled",
+  checklistCollapse: "kneeRehabChecklistCollapseState"
 };
 
 const DEFAULT_COMPLETED_DATES = [
@@ -1319,6 +1320,36 @@ const setRowDone = (setId, isDone) => {
   saveLastUpdated();
 };
 
+const resetSetRowsForTrackers = (trackers) => {
+  trackers.forEach((tracker) => {
+    tracker.sets.forEach((set) => {
+      const config = getSetRowConfig(set.id);
+      const totalReps = config.totalReps;
+      const workDurationSec = config.workDurationSec;
+      const restDurationSec = config.restDurationSec;
+
+      setRowState[set.id] = {
+        elapsedMs: 0,
+        startedAt: null,
+        isRunning: false,
+        isDone: false,
+        isRepLoop: true,
+        totalReps: totalReps,
+        currentRep: 1,
+        repState: "work",
+        timeRemainingSec: workDurationSec,
+        workDurationSec: workDurationSec,
+        restDurationSec: restDurationSec
+      };
+    });
+  });
+
+  saveSetRows();
+  renderSetRows();
+  ensureSetRowInterval();
+  saveLastUpdated();
+};
+
 const resetExerciseSetRows = (trackerId) => {
   const tracker = exerciseSetTrackers.find((item) => item.id === trackerId);
   if (!tracker) return;
@@ -1326,31 +1357,14 @@ const resetExerciseSetRows = (trackerId) => {
   const shouldReset = window.confirm(`Reset ${tracker.label} set rows? Your checklist, notes, and session timer will stay saved.`);
   if (!shouldReset) return;
 
-  tracker.sets.forEach((set) => {
-    const config = getSetRowConfig(set.id);
-    const totalReps = config.totalReps;
-    const workDurationSec = config.workDurationSec;
-    const restDurationSec = config.restDurationSec;
+  resetSetRowsForTrackers([tracker]);
+};
 
-    setRowState[set.id] = {
-      elapsedMs: 0,
-      startedAt: null,
-      isRunning: false,
-      isDone: false,
-      isRepLoop: true,
-      totalReps: totalReps,
-      currentRep: 1,
-      repState: "work",
-      timeRemainingSec: workDurationSec,
-      workDurationSec: workDurationSec,
-      restDurationSec: restDurationSec
-    };
-  });
+const resetAllSetRows = () => {
+  const shouldReset = window.confirm("Reset all exercise set rows? Your checklist, notes, and session timer will stay saved.");
+  if (!shouldReset) return;
 
-  saveSetRows();
-  renderSetRows();
-  ensureSetRowInterval();
-  saveLastUpdated();
+  resetSetRowsForTrackers(exerciseSetTrackers);
 };
 
 const setupSetRows = () => {
@@ -1366,6 +1380,8 @@ const setupSetRows = () => {
   exerciseSetTrackers.forEach((tracker) => {
     document.getElementById(`${tracker.id}-set-reset`)?.addEventListener("click", () => resetExerciseSetRows(tracker.id));
   });
+
+  document.getElementById("reset-all-sets")?.addEventListener("click", resetAllSetRows);
 };
 
 const setupNotes = () => {
@@ -1416,6 +1432,60 @@ const setupChecklistListeners = () => {
   });
 };
 
+const readStoredChecklistCollapse = () => {
+  try {
+    const storedValue = localStorage.getItem(STORAGE_KEYS.checklistCollapse);
+    if (storedValue === null) return {};
+
+    const storedState = JSON.parse(storedValue);
+    if (!storedState || typeof storedState !== "object" || Array.isArray(storedState)) {
+      localStorage.removeItem(STORAGE_KEYS.checklistCollapse);
+      return {};
+    }
+
+    return storedState;
+  } catch (error) {
+    console.warn("Could not parse checklist collapse state. Resetting collapse controls.", error);
+    localStorage.removeItem(STORAGE_KEYS.checklistCollapse);
+    return {};
+  }
+};
+
+const saveChecklistCollapse = () => {
+  const state = {};
+
+  document.querySelectorAll(".checklist-toggle[aria-controls]").forEach((toggle) => {
+    const checklistId = toggle.getAttribute("aria-controls");
+    const checklist = checklistId ? document.getElementById(checklistId) : null;
+    if (checklist) state[checklistId] = checklist.hidden === true;
+  });
+
+  localStorage.setItem(STORAGE_KEYS.checklistCollapse, JSON.stringify(state));
+};
+
+const setChecklistCollapsed = (toggle, checklist, isCollapsed) => {
+  checklist.hidden = isCollapsed;
+  toggle.setAttribute("aria-expanded", String(!isCollapsed));
+  toggle.textContent = isCollapsed ? "Show Checklist" : "Hide Checklist";
+};
+
+const setupChecklistCollapse = () => {
+  const storedState = readStoredChecklistCollapse();
+
+  document.querySelectorAll(".checklist-toggle[aria-controls]").forEach((toggle) => {
+    const checklistId = toggle.getAttribute("aria-controls");
+    const checklist = checklistId ? document.getElementById(checklistId) : null;
+    if (!checklist) return;
+
+    setChecklistCollapsed(toggle, checklist, storedState[checklistId] === true);
+
+    toggle.addEventListener("click", () => {
+      setChecklistCollapsed(toggle, checklist, !checklist.hidden);
+      saveChecklistCollapse();
+    });
+  });
+};
+
 const setupSessionMeta = () => {
   document.getElementById("session-date").textContent = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
@@ -1434,6 +1504,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCalendar();
   restoreChecklist();
   setupChecklistListeners();
+  setupChecklistCollapse();
   setupVoiceCues();
   setupNotes();
   setupReset();

@@ -216,6 +216,7 @@
             <h2 id="wall-sit-heading">Exercise 1: Wall Sit</h2>
             <p>Joint protection and balance tuning</p>
           </div>
+          <button type="button" id="wall-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="wall-checklist">Hide Checklist</button>
         </div>
 
         <div class="set-tracker" data-set-tracker="wall" role="group" aria-labelledby="wall-set-heading">
@@ -250,7 +251,7 @@
           </div>
         </div>
 
-        <div class="checklist" data-section="Wall Sit">
+        <div id="wall-checklist" class="checklist" data-section="Wall Sit">
           <div class="check-item">
             <input type="checkbox" id="wall-setup" data-checklist-item />
             <label for="wall-setup"><strong>Setup:</strong> Upper back and hips are flat against the wall. No leaning or shifting hip weight to one side.</label>
@@ -281,6 +282,7 @@
             <h2 id="slr-heading">Exercise 2: Straight Leg Raise</h2>
             <p>Knee lock and VMO activation</p>
           </div>
+          <button type="button" id="slr-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="slr-checklist">Hide Checklist</button>
         </div>
 
         <div class="set-tracker" data-set-tracker="slr" role="group" aria-labelledby="slr-set-heading">
@@ -326,7 +328,7 @@
           </div>
         </div>
 
-        <div class="checklist" data-section="Straight Leg Raise">
+        <div id="slr-checklist" class="checklist" data-section="Straight Leg Raise">
           <div class="check-item">
             <input type="checkbox" id="slr-setup" data-checklist-item />
             <label for="slr-setup"><strong>Setup:</strong> Lie flat on your back on the bed. Bend the knee of your healthy leg to stabilize your lower back.</label>
@@ -361,6 +363,7 @@
             <h2 id="bridge-heading">Exercise 3: Glute Bridges</h2>
             <p>Hip drive and glute activation</p>
           </div>
+          <button type="button" id="bridge-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="bridge-checklist">Hide Checklist</button>
         </div>
 
         <div class="set-tracker" data-set-tracker="bridge" role="group" aria-labelledby="bridge-set-heading">
@@ -395,7 +398,7 @@
           </div>
         </div>
 
-        <div class="checklist" data-section="Glute Bridges">
+        <div id="bridge-checklist" class="checklist" data-section="Glute Bridges">
           <div class="check-item">
             <input type="checkbox" id="bridge-setup" data-checklist-item />
             <label for="bridge-setup"><strong>Setup:</strong> Lie on your back with knees bent, feet flat, and feet hip-width apart.</label>
@@ -422,6 +425,7 @@
             <h2 id="clam-heading">Exercise 4: Clamshells</h2>
             <p>Outer hip control and knee alignment</p>
           </div>
+          <button type="button" id="clam-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="clam-checklist">Hide Checklist</button>
         </div>
 
         <div class="set-tracker" data-set-tracker="clam" role="group" aria-labelledby="clam-set-heading">
@@ -456,7 +460,7 @@
           </div>
         </div>
 
-        <div class="checklist" data-section="Clamshells">
+        <div id="clam-checklist" class="checklist" data-section="Clamshells">
           <div class="check-item">
             <input type="checkbox" id="clam-setup" data-checklist-item />
             <label for="clam-setup"><strong>Setup:</strong> Lie on your side with knees bent, feet together, and hips stacked.</label>
@@ -483,13 +487,14 @@
             <h2 id="monitoring-heading">Post-Rehab Monitoring</h2>
             <p>Delayed response check</p>
           </div>
+          <button type="button" id="monitoring-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="monitoring-checklist">Hide Checklist</button>
         </div>
 
         <div class="safety-reminder" role="note">
           Stop and follow your physical therapist’s guidance if you notice sharp joint pain, increased swelling, or clicking/grating during the session.
         </div>
 
-        <div class="checklist" data-section="Post-Rehab Monitoring">
+        <div id="monitoring-checklist" class="checklist" data-section="Post-Rehab Monitoring">
           <div class="check-item warning-item">
             <input type="checkbox" id="monitor-immediate" data-checklist-item />
             <label for="monitor-immediate"><strong>Immediately after finishing:</strong> The knee joint feels stable and has no increased throbbing or sharp pain.</label>
@@ -520,6 +525,7 @@
 
     <footer class="footer-actions">
       <button type="button" id="reset-checklist" class="button danger-button">Reset Checklist</button>
+      <button type="button" id="reset-all-sets" class="button danger-button">Reset all sets</button>
       <button type="button" id="clear-notes" class="button secondary-button">Clear Notes</button>
       <p class="footer-note">This tracker is for following your given rehab plan. It does not replace medical advice.</p>
     </footer>
