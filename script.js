@@ -4,6 +4,9 @@ const checklistItems = [
   "wall-foot-position",
   "wall-data-check",
   "wall-safety-check",
+  "quad-set-setup",
+  "quad-set-vmo",
+  "quad-set-safety",
   "slr-setup",
   "slr-lock-twist",
   "slr-tempo-lift",
@@ -18,6 +21,15 @@ const checklistItems = [
   "clam-hip-stack",
   "clam-control",
   "clam-safety-check",
+  "side-leg-lift-setup",
+  "side-leg-lift-control",
+  "side-leg-lift-safety",
+  "chair-squat-support",
+  "chair-squat-hip-hinge",
+  "chair-squat-safety",
+  "mini-single-leg-squat-support",
+  "mini-single-leg-squat-depth",
+  "mini-single-leg-squat-safety",
   "monitor-immediate",
   "monitor-next-morning",
   "monitor-walking"
@@ -33,10 +45,16 @@ const STORAGE_KEYS = {
   sessionHistory: "kneeRehabSessionHistory",
   voiceCuesEnabled: "kneeRehabVoiceCuesEnabled",
   checklistCollapse: "kneeRehabChecklistCollapseState",
-  language: "kneeRehabLanguage"
+  language: "kneeRehabLanguage",
+  assessment: "kneeRehabAssessment",
+  weeklySchedule: "kneeRehabWeeklySchedule",
+  dailyLogs: "kneeRehabDailyLogs",
+  safetyEvents: "kneeRehabSafetyEvents",
+  profileLastUpdated: "kneeRehabProfileLastUpdated"
 };
 
 const SUPABASE_TABLE = "rehab_sessions";
+const SUPABASE_PROFILE_TABLE = "rehab_profiles";
 const SUPABASE_PLACEHOLDER_VALUES = new Set([
   "",
   "YOUR_SUPABASE_URL",
@@ -46,6 +64,49 @@ const SUPABASE_PLACEHOLDER_VALUES = new Set([
 
 const SUPPORTED_LANGUAGES = ["en", "th"];
 const DEFAULT_LANGUAGE = "en";
+
+const REHAB_PHASES = [
+  {
+    id: "phase-1-foundation",
+    number: 1,
+    titleKey: "phase.one.title",
+    goalKey: "phase.one.goal",
+    restKey: "phase.one.rest"
+  },
+  {
+    id: "phase-2-static-load",
+    number: 2,
+    titleKey: "phase.two.title",
+    goalKey: "phase.two.goal",
+    restKey: "phase.two.rest"
+  },
+  {
+    id: "phase-3-dynamic-control",
+    number: 3,
+    titleKey: "phase.three.title",
+    goalKey: "phase.three.goal",
+    restKey: "phase.three.rest"
+  }
+];
+
+const REHAB_EXERCISES = [
+  { id: "quad-set", phaseId: "phase-1-foundation", setIds: ["quad-set-1", "quad-set-2", "quad-set-3"], target: "3 sets", checkIds: ["quad-set-setup", "quad-set-vmo", "quad-set-safety"] },
+  { id: "slr", phaseId: "phase-1-foundation", setIds: ["slr-1", "slr-2", "slr-3"], target: "3 sets", checkIds: ["slr-setup", "slr-lock-twist", "slr-tempo-lift", "slr-tempo-hold", "slr-tempo-lower", "slr-data-check"] },
+  { id: "bridge", phaseId: "phase-1-foundation", setIds: ["bridge-1", "bridge-2", "bridge-3"], target: "3 sets", checkIds: ["bridge-setup", "bridge-core", "bridge-lift", "bridge-safety-check"] },
+  { id: "clam", phaseId: "phase-1-foundation", setIds: ["clam-1", "clam-2", "clam-3"], target: "3 sets", checkIds: ["clam-setup", "clam-hip-stack", "clam-control", "clam-safety-check"] },
+  { id: "side-leg-lift", phaseId: "phase-1-foundation", setIds: ["side-leg-lift-1", "side-leg-lift-2", "side-leg-lift-3"], target: "3 sets", checkIds: ["side-leg-lift-setup", "side-leg-lift-control", "side-leg-lift-safety"] },
+  { id: "wall", phaseId: "phase-2-static-load", setIds: ["wall-1", "wall-2", "wall-3", "wall-4"], target: "3-4 sets, 15-20 seconds", checkIds: ["wall-setup", "wall-angle", "wall-foot-position", "wall-data-check", "wall-safety-check"] },
+  { id: "chair-squat", phaseId: "phase-3-dynamic-control", setIds: ["chair-squat-1"], target: "1 set, 10 reps", checkIds: ["chair-squat-support", "chair-squat-hip-hinge", "chair-squat-safety"] },
+  { id: "mini-single-leg-squat", phaseId: "phase-3-dynamic-control", setIds: ["mini-single-leg-squat-1", "mini-single-leg-squat-2"], target: "1-2 sets, 5-10 reps", checkIds: ["mini-single-leg-squat-support", "mini-single-leg-squat-depth", "mini-single-leg-squat-safety"] }
+];
+
+const PROGRESSION_RULES = {
+  maxPainForProgression: 3,
+  maxPainIncrease: 2,
+  requiredStableSessions: 3,
+  sharpPainBlocksProgression: true,
+  swellingBlocksProgression: true
+};
 
 let currentLanguage = DEFAULT_LANGUAGE;
 
@@ -83,10 +144,14 @@ const translations = {
     "progress.text": "Progress: <span id=\"completed-count\">{completed}</span> / <span id=\"total-count\">{total}</span> completed",
     "exercise.progressHeading": "Exercise Progress",
     "exercise.progressMeta": "Sets and technique checks",
+    "exercise.quad-set": "Quad Set",
     "exercise.wall": "Wall Sit",
     "exercise.slr": "Straight Leg Raise",
     "exercise.bridge": "Glute Bridges",
     "exercise.clam": "Clamshells",
+    "exercise.side-leg-lift": "Side Lying Leg Lift",
+    "exercise.chair-squat": "Chair Squat",
+    "exercise.mini-single-leg-squat": "Mini Single Leg Squat with Support",
     "progress.sets": "<span id=\"{id}-progress-sets\">{value}</span> sets",
     "progress.checks": "<span id=\"{id}-progress-checks\">{value}</span> checks",
     "status.finished": "Finished",
@@ -107,8 +172,60 @@ const translations = {
     "calendar.markComplete": "Mark Complete",
     "calendar.unmarkComplete": "Unmark Complete",
     "calendar.completedAria": ", completed",
-    "plan.heading": "Daily Rehabilitation Plan",
-    "plan.description": "Perform these exercises daily from today until your next physical therapy session.",
+    "plan.heading": "Three-Phase Rehab Plan",
+    "plan.description": "Progress from zero-load activation to supported dynamic control only when safety checks stay stable.",
+    "phase.one.number": "Phase 1",
+    "phase.one.title": "Neuromuscular Activation and Zero-Load Foundation",
+    "phase.one.goal": "Switch on the muscles without placing compressive force on the knee joint surface.",
+    "phase.one.rest": "Rest 1 minute between exercises.",
+    "phase.one.exercises": "Quad Set, Straight Leg Raise, Glute Bridges, Clamshell, Side Lying Leg Lift",
+    "phase.two.number": "Phase 2",
+    "phase.two.title": "Static Weight-Bearing",
+    "phase.two.goal": "Safely tune and align the VMO vertically with wall support.",
+    "phase.two.rest": "Rest 1 minute between sets.",
+    "phase.two.exercises": "Wall Sit, 3-4 sets, 15-20 seconds",
+    "phase.three.number": "Phase 3",
+    "phase.three.title": "Dynamic Vertical Load Control",
+    "phase.three.goal": "Practice supported real-world movement with shallow range and strict control.",
+    "phase.three.rest": "Always hold onto stable support for balance.",
+    "phase.three.exercises": "Chair Squat and Mini Single Leg Squat with Support",
+    "assessment.meta": "Assessment",
+    "assessment.heading": "Recovery Setup",
+    "assessment.description": "Use these answers to generate a conservative weekly progression.",
+    "assessment.statusNotSaved": "Not saved",
+    "assessment.statusSaved": "Saved",
+    "assessment.painLevel": "Current knee pain, 0-10",
+    "assessment.injuryHistory": "Knee injury history",
+    "assessment.commitmentDays": "Days per week you can commit",
+    "assessment.supportAvailable": "I have stable support available for standing exercises.",
+    "assessment.save": "Save setup",
+    "schedule.meta": "Weekly schedule",
+    "schedule.heading": "Generated Progression",
+    "schedule.empty": "Save your recovery setup to generate a schedule.",
+    "schedule.dayLabel": "Day {number}",
+    "schedule.phaseLabel": "Phase {number}",
+    "schedule.focus.foundation": "Foundation activation",
+    "schedule.focus.static": "Static wall support",
+    "schedule.focus.dynamic": "Supported dynamic control",
+    "dailyLog.heading": "Daily Completion Log",
+    "dailyLog.description": "Record symptoms before marking a session complete.",
+    "dailyLog.painBefore": "Pain before session, 0-10",
+    "dailyLog.painAfter": "Pain after session, 0-10",
+    "dailyLog.swellingStatus": "Swelling or next-morning stiffness",
+    "dailyLog.swelling.none": "None",
+    "dailyLog.swelling.mild": "Mild",
+    "dailyLog.swelling.increased": "Increased",
+    "dailyLog.sharpPain": "Sharp joint pain occurred during Phase 2 or Phase 3.",
+    "dailyLog.phaseCompleted": "Highest phase completed today",
+    "dailyLog.phaseOption.one": "Phase 1",
+    "dailyLog.phaseOption.two": "Phase 2",
+    "dailyLog.phaseOption.three": "Phase 3",
+    "dailyLog.save": "Save daily log",
+    "safety.missingPain": "Enter pain before and after the session to evaluate safety.",
+    "safety.sharpPain": "Stop Phase 2 and Phase 3 work today. Return to Phase 1 only and contact your physical therapist if sharp pain repeats.",
+    "safety.swelling": "Do not progress this week. Use Phase 1 only until swelling and stiffness return to baseline.",
+    "safety.painLimit": "Keep the next session at the same or lower phase. Pain should stay at 3/10 or below and should not rise by more than 2 points.",
+    "safety.alertStable": "Safety checks are stable. Continue with the generated schedule.",
     "summary.volume": "Volume / Dosage",
     "summary.timing": "Recommended Timing",
     "summary.focus": "Primary Focus",
@@ -128,7 +245,9 @@ const translations = {
     "summary.clam.volume": "15 reps per side <br><strong>Total: 2 Sets</strong>",
     "summary.clam.timing": "After Glute Bridges or while relaxing",
     "summary.clam.focus": "Keep hips stacked and move from the outside hip without rolling backward.",
-    "section.wall.title": "Exercise 1: Wall Sit",
+    "section.quad-set.title": "Exercise 1: Quad Set",
+    "section.quad-set.subtitle": "VMO activation without joint load",
+    "section.wall.title": "Exercise 6: Wall Sit",
     "section.wall.subtitle": "Joint protection and balance tuning",
     "section.slr.title": "Exercise 2: Straight Leg Raise",
     "section.slr.subtitle": "Knee lock and VMO activation",
@@ -136,14 +255,24 @@ const translations = {
     "section.bridge.subtitle": "Hip drive and glute activation",
     "section.clam.title": "Exercise 4: Clamshells",
     "section.clam.subtitle": "Outer hip control and knee alignment",
+    "section.side-leg-lift.title": "Exercise 5: Side Lying Leg Lift",
+    "section.side-leg-lift.subtitle": "Hip abductor control with a quiet trunk",
+    "section.chair-squat.title": "Exercise 7: Chair Squat",
+    "section.chair-squat.subtitle": "Supported hip hinge and shallow knee bend",
+    "section.mini-single-leg-squat.title": "Exercise 8: Mini Single Leg Squat with Support",
+    "section.mini-single-leg-squat.subtitle": "Shallow single-leg control with stable support",
     "section.monitoring.title": "Post-Rehab Monitoring",
     "section.monitoring.subtitle": "Delayed response check",
     "checklist.hide": "Hide Checklist",
     "checklist.show": "Show Checklist",
+    "sets.quad-set": "Quad Set Sets",
     "sets.wall": "Wall Sit Sets",
     "sets.slr": "Straight Leg Raise Sets",
     "sets.bridge": "Glute Bridge Sets",
     "sets.clam": "Clamshell Sets",
+    "sets.side-leg-lift": "Side Lying Leg Lift Sets",
+    "sets.chair-squat": "Chair Squat Sets",
+    "sets.mini-single-leg-squat": "Mini Single Leg Squat Sets",
     "sets.count": "<span id=\"{id}-set-count\">{count}</span> / <span id=\"{id}-set-total\">{total}</span> sets",
     "sets.reset": "Reset Sets",
     "set.label": "Set {number}",
@@ -163,6 +292,9 @@ const translations = {
     "cue.lift": "Lift",
     "cue.open": "Open",
     "cue.setComplete": "Set complete",
+    "check.quadSet.setup": "<strong>Setup:</strong> Sit or lie with the injured leg straight and supported.",
+    "check.quadSet.vmo": "<strong>VMO:</strong> Tighten the thigh and gently push the knee down until the inner thigh switches on.",
+    "check.quadSet.safety": "<strong>Safety Check:</strong> Keep the kneecap tracking straight and stop if joint pain appears.",
     "check.wall.setup": "<strong>Setup:</strong> Upper back and hips are flat against the wall. No leaning or shifting hip weight to one side.",
     "check.wall.angle": "<strong>Angle:</strong> Slide down to a shallow angle (<strong>30°-45° only</strong>). Do <strong>not</strong> go down to a 90° deep squat. Keep knees behind your toes.",
     "check.wall.foot": "<strong>Foot Position:</strong> Feet are hip-width apart, or slightly wider, with toes pointed slightly outward (15°).",
@@ -182,6 +314,15 @@ const translations = {
     "check.clam.stack": "<strong>Hip Stack:</strong> Keep your pelvis still and avoid rolling your top hip backward.",
     "check.clam.control": "<strong>Control:</strong> Lift the top knee slowly, pause briefly, then lower with control while feet stay together.",
     "check.clam.safety": "<strong>Safety Check:</strong> Stop if the knee twists, pinches, or feels unstable during the movement.",
+    "check.sideLegLift.setup": "<strong>Setup:</strong> Lie on your side with the bottom knee bent and the top leg straight.",
+    "check.sideLegLift.control": "<strong>Control:</strong> Lift the top leg slowly without rolling the hips backward.",
+    "check.sideLegLift.safety": "<strong>Safety Check:</strong> Stop if the knee twists, pinches, or feels unstable.",
+    "check.chairSquat.support": "<strong>Support:</strong> Stand in front of a chair and keep stable support within reach.",
+    "check.chairSquat.hipHinge": "<strong>Hip Hinge:</strong> Sit the hips back toward the chair while keeping knees aligned over toes.",
+    "check.chairSquat.safety": "<strong>Safety Check:</strong> Use a shallow range and stop if sharp joint pain appears.",
+    "check.miniSingleLegSquat.support": "<strong>Support:</strong> Hold stable support and shift weight onto the working leg.",
+    "check.miniSingleLegSquat.depth": "<strong>Depth:</strong> Bend only a small amount while the knee stays aligned over the toes.",
+    "check.miniSingleLegSquat.safety": "<strong>Safety Check:</strong> Stop if the knee caves inward, clicks painfully, or feels unstable.",
     "monitoring.reminder": "Stop and follow your physical therapist's guidance if you notice sharp joint pain, increased swelling, or clicking/grating during the session.",
     "check.monitor.immediate": "<strong>Immediately after finishing:</strong> The knee joint feels stable and has no increased throbbing or sharp pain.",
     "check.monitor.morning": "<strong>Next Morning Check:</strong> The knee is not swollen, tight, or stiff.",
@@ -261,10 +402,14 @@ const translations = {
     "progress.text": "ความคืบหน้า: <span id=\"completed-count\">{completed}</span> / <span id=\"total-count\">{total}</span> เสร็จแล้ว",
     "exercise.progressHeading": "ความคืบหน้าการออกกำลังกาย",
     "exercise.progressMeta": "เซ็ตและการตรวจเทคนิค",
+    "exercise.quad-set": "Quad Set",
     "exercise.wall": "Wall Sit",
     "exercise.slr": "Straight Leg Raise",
     "exercise.bridge": "Glute Bridges",
     "exercise.clam": "Clamshells",
+    "exercise.side-leg-lift": "Side Lying Leg Lift",
+    "exercise.chair-squat": "Chair Squat",
+    "exercise.mini-single-leg-squat": "Mini Single Leg Squat แบบมีที่พยุง",
     "progress.sets": "<span id=\"{id}-progress-sets\">{value}</span> เซ็ต",
     "progress.checks": "<span id=\"{id}-progress-checks\">{value}</span> รายการตรวจ",
     "status.finished": "เสร็จแล้ว",
@@ -285,8 +430,60 @@ const translations = {
     "calendar.markComplete": "ทำเครื่องหมายว่าเสร็จแล้ว",
     "calendar.unmarkComplete": "ยกเลิกเครื่องหมายเสร็จแล้ว",
     "calendar.completedAria": ", เสร็จแล้ว",
-    "plan.heading": "แผนฟื้นฟูรายวัน",
-    "plan.description": "ทำท่าเหล่านี้ทุกวันตั้งแต่วันนี้จนถึงการทำกายภาพบำบัดครั้งถัดไป",
+    "plan.heading": "แผนฟื้นฟู 3 ระยะ",
+    "plan.description": "ค่อย ๆ เพิ่มจากการกระตุ้นแบบไม่ลงน้ำหนักไปสู่การเคลื่อนไหวแบบมีที่พยุง เมื่อการตรวจความปลอดภัยยังคงปกติ",
+    "phase.one.number": "ระยะที่ 1",
+    "phase.one.title": "ระยะที่ 1: กระตุ้นกล้ามเนื้อแบบไม่ลงน้ำหนัก",
+    "phase.one.goal": "กระตุ้นกล้ามเนื้อโดยไม่เพิ่มแรงกดบนผิวข้อเข่า",
+    "phase.one.rest": "พัก 1 นาทีระหว่างท่า",
+    "phase.one.exercises": "Quad Set, Straight Leg Raise, Glute Bridges, Clamshell, Side Lying Leg Lift",
+    "phase.two.number": "ระยะที่ 2",
+    "phase.two.title": "ระยะที่ 2: ลงน้ำหนักคงที่",
+    "phase.two.goal": "ฝึกแนวเข่าและ VMO อย่างระมัดระวังโดยใช้ผนังช่วยพยุง",
+    "phase.two.rest": "พัก 1 นาทีระหว่างเซ็ต",
+    "phase.two.exercises": "Wall Sit, 3-4 เซ็ต, 15-20 วินาที",
+    "phase.three.number": "ระยะที่ 3",
+    "phase.three.title": "ระยะที่ 3: ควบคุมแรงลงน้ำหนักขณะเคลื่อนไหว",
+    "phase.three.goal": "ฝึกการเคลื่อนไหวจริงแบบมีที่พยุง ช่วงสั้น และควบคุมเข้มงวด",
+    "phase.three.rest": "จับที่พยุงที่มั่นคงไว้เสมอเพื่อช่วยทรงตัว",
+    "phase.three.exercises": "Chair Squat และ Mini Single Leg Squat แบบมีที่พยุง",
+    "assessment.meta": "การประเมิน",
+    "assessment.heading": "ตั้งค่าการฟื้นฟู",
+    "assessment.description": "ใช้คำตอบเหล่านี้เพื่อสร้างแผนความก้าวหน้ารายสัปดาห์แบบระมัดระวัง",
+    "assessment.statusNotSaved": "ยังไม่ได้บันทึก",
+    "assessment.statusSaved": "บันทึกแล้ว",
+    "assessment.painLevel": "ระดับปวดเข่าปัจจุบัน 0-10",
+    "assessment.injuryHistory": "ประวัติอาการหรือการบาดเจ็บที่เข่า",
+    "assessment.commitmentDays": "จำนวนวันที่ทำได้ต่อสัปดาห์",
+    "assessment.supportAvailable": "มีที่พยุงมั่นคงสำหรับท่ายืน",
+    "assessment.save": "บันทึกการตั้งค่า",
+    "schedule.meta": "ตารางรายสัปดาห์",
+    "schedule.heading": "แผนความก้าวหน้าที่สร้าง",
+    "schedule.empty": "บันทึกการตั้งค่าการฟื้นฟูก่อนเพื่อสร้างตาราง",
+    "schedule.dayLabel": "วันที่ {number}",
+    "schedule.phaseLabel": "ระยะที่ {number}",
+    "schedule.focus.foundation": "กระตุ้นพื้นฐาน",
+    "schedule.focus.static": "พยุงกับผนังแบบคงที่",
+    "schedule.focus.dynamic": "ควบคุมการเคลื่อนไหวแบบมีที่พยุง",
+    "dailyLog.heading": "บันทึกการทำประจำวัน",
+    "dailyLog.description": "บันทึกอาการก่อนทำเครื่องหมายว่าเซสชันเสร็จ",
+    "dailyLog.painBefore": "ปวดก่อนเริ่ม 0-10",
+    "dailyLog.painAfter": "ปวดหลังทำ 0-10",
+    "dailyLog.swellingStatus": "บวมหรือตึงในเช้าวันถัดไป",
+    "dailyLog.swelling.none": "ไม่มี",
+    "dailyLog.swelling.mild": "เล็กน้อย",
+    "dailyLog.swelling.increased": "เพิ่มขึ้น",
+    "dailyLog.sharpPain": "มีอาการปวดแปลบในข้อระหว่างระยะที่ 2 หรือ 3",
+    "dailyLog.phaseCompleted": "ระยะสูงสุดที่ทำวันนี้",
+    "dailyLog.phaseOption.one": "ระยะที่ 1",
+    "dailyLog.phaseOption.two": "ระยะที่ 2",
+    "dailyLog.phaseOption.three": "ระยะที่ 3",
+    "dailyLog.save": "บันทึกประจำวัน",
+    "safety.missingPain": "กรอกระดับปวดก่อนและหลังทำเพื่อประเมินความปลอดภัย",
+    "safety.sharpPain": "หยุดงานระยะที่ 2 และ 3 วันนี้ กลับไปทำเฉพาะระยะที่ 1 และติดต่อผู้ดูแลหากอาการปวดแปลบเกิดซ้ำ",
+    "safety.swelling": "อย่าเพิ่มระดับในสัปดาห์นี้ ใช้เฉพาะระยะที่ 1 จนกว่าอาการบวมและตึงกลับสู่ระดับเดิม",
+    "safety.painLimit": "เซสชันถัดไปให้คงระยะเดิมหรือลดลง ระดับปวดควรอยู่ไม่เกิน 3/10 และไม่เพิ่มเกิน 2 คะแนน",
+    "safety.alertStable": "การตรวจความปลอดภัยยังคงปกติ ทำตามตารางที่สร้างไว้ต่อได้",
     "summary.volume": "ปริมาณ / จำนวนครั้ง",
     "summary.timing": "เวลาที่แนะนำ",
     "summary.focus": "จุดเน้นหลัก",
@@ -306,7 +503,9 @@ const translations = {
     "summary.clam.volume": "ข้างละ 15 ครั้ง <br><strong>รวม: 2 เซ็ต</strong>",
     "summary.clam.timing": "หลัง Glute Bridges หรือระหว่างพักผ่อน",
     "summary.clam.focus": "ให้สะโพกซ้อนกันและขยับจากสะโพกด้านนอก โดยไม่กลิ้งตัวไปด้านหลัง",
-    "section.wall.title": "ท่าที่ 1: Wall Sit",
+    "section.quad-set.title": "ท่าที่ 1: Quad Set",
+    "section.quad-set.subtitle": "กระตุ้น VMO โดยไม่ลงน้ำหนักข้อ",
+    "section.wall.title": "ท่าที่ 6: Wall Sit",
     "section.wall.subtitle": "ปกป้องข้อและปรับสมดุล",
     "section.slr.title": "ท่าที่ 2: Straight Leg Raise",
     "section.slr.subtitle": "ล็อกเข่าและกระตุ้น VMO",
@@ -314,14 +513,24 @@ const translations = {
     "section.bridge.subtitle": "แรงขับจากสะโพกและการกระตุ้นกล้ามเนื้อก้น",
     "section.clam.title": "ท่าที่ 4: Clamshells",
     "section.clam.subtitle": "ควบคุมสะโพกด้านนอกและแนวเข่า",
+    "section.side-leg-lift.title": "ท่าที่ 5: Side Lying Leg Lift",
+    "section.side-leg-lift.subtitle": "ควบคุมสะโพกด้านข้างโดยไม่กลิ้งลำตัว",
+    "section.chair-squat.title": "ท่าที่ 7: Chair Squat",
+    "section.chair-squat.subtitle": "ฝึกพับสะโพกและงอเข่าตื้นแบบมีที่พยุง",
+    "section.mini-single-leg-squat.title": "ท่าที่ 8: Mini Single Leg Squat แบบมีที่พยุง",
+    "section.mini-single-leg-squat.subtitle": "ควบคุมขาข้างเดียวช่วงตื้นพร้อมที่พยุง",
     "section.monitoring.title": "การติดตามหลังฟื้นฟู",
     "section.monitoring.subtitle": "ตรวจการตอบสนองภายหลัง",
     "checklist.hide": "ซ่อนรายการตรวจ",
     "checklist.show": "แสดงรายการตรวจ",
+    "sets.quad-set": "เซ็ต Quad Set",
     "sets.wall": "เซ็ต Wall Sit",
     "sets.slr": "เซ็ต Straight Leg Raise",
     "sets.bridge": "เซ็ต Glute Bridge",
     "sets.clam": "เซ็ต Clamshell",
+    "sets.side-leg-lift": "เซ็ต Side Lying Leg Lift",
+    "sets.chair-squat": "เซ็ต Chair Squat",
+    "sets.mini-single-leg-squat": "เซ็ต Mini Single Leg Squat",
     "sets.count": "<span id=\"{id}-set-count\">{count}</span> / <span id=\"{id}-set-total\">{total}</span> เซ็ต",
     "sets.reset": "รีเซ็ตเซ็ต",
     "set.label": "เซ็ต {number}",
@@ -341,6 +550,9 @@ const translations = {
     "cue.lift": "ยก",
     "cue.open": "เปิด",
     "cue.setComplete": "เซ็ตเสร็จแล้ว",
+    "check.quadSet.setup": "<strong>การจัดท่า:</strong> นั่งหรือนอนโดยเหยียดขาข้างที่บาดเจ็บให้ตรงและมีที่รองรับ",
+    "check.quadSet.vmo": "<strong>VMO:</strong> เกร็งต้นขาและกดเข่าลงเบา ๆ จนรู้สึกกล้ามเนื้อต้นขาด้านในทำงาน",
+    "check.quadSet.safety": "<strong>ตรวจความปลอดภัย:</strong> ให้ลูกสะบ้าเคลื่อนตรง และหยุดหากมีอาการปวดในข้อ",
     "check.wall.setup": "<strong>การจัดท่า:</strong> หลังส่วนบนและสะโพกแนบผนัง ห้ามเอนตัวหรือถ่ายน้ำหนักสะโพกไปข้างใดข้างหนึ่ง",
     "check.wall.angle": "<strong>มุมเข่า:</strong> เลื่อนตัวลงเป็นมุมตื้น (<strong>เฉพาะ 30°-45°</strong>) ห้ามลงลึกถึงท่าสควอต 90° ให้เข่าอยู่หลังปลายเท้า",
     "check.wall.foot": "<strong>ตำแหน่งเท้า:</strong> วางเท้ากว้างเท่าช่วงสะโพก หรือกว้างกว่าเล็กน้อย โดยให้ปลายเท้าชี้ออกเล็กน้อย (15°)",
@@ -360,6 +572,15 @@ const translations = {
     "check.clam.stack": "<strong>สะโพกซ้อนกัน:</strong> ให้เชิงกรานอยู่นิ่งและหลีกเลี่ยงการกลิ้งสะโพกด้านบนไปด้านหลัง",
     "check.clam.control": "<strong>การควบคุม:</strong> ยกเข่าด้านบนขึ้นช้า ๆ หยุดค้างสั้น ๆ แล้วลดลงอย่างควบคุม โดยให้เท้ายังคงชิดกัน",
     "check.clam.safety": "<strong>ตรวจความปลอดภัย:</strong> หยุดหากเข่าบิด รู้สึกหนีบ หรือรู้สึกไม่มั่นคงระหว่างเคลื่อนไหว",
+    "check.sideLegLift.setup": "<strong>การจัดท่า:</strong> นอนตะแคง งอเข่าด้านล่าง และเหยียดขาด้านบนตรง",
+    "check.sideLegLift.control": "<strong>การควบคุม:</strong> ยกขาด้านบนช้า ๆ โดยไม่กลิ้งสะโพกไปด้านหลัง",
+    "check.sideLegLift.safety": "<strong>ตรวจความปลอดภัย:</strong> หยุดหากเข่าบิด รู้สึกหนีบ หรือไม่มั่นคง",
+    "check.chairSquat.support": "<strong>ที่พยุง:</strong> ยืนหน้าก้าอี้และให้มีที่พยุงมั่นคงใกล้มือ",
+    "check.chairSquat.hipHinge": "<strong>พับสะโพก:</strong> ถอยสะโพกไปหาก้าอี้โดยให้เข่าอยู่แนวเดียวกับปลายเท้า",
+    "check.chairSquat.safety": "<strong>ตรวจความปลอดภัย:</strong> ใช้ช่วงการเคลื่อนไหวตื้น และหยุดหากปวดแปลบในข้อ",
+    "check.miniSingleLegSquat.support": "<strong>ที่พยุง:</strong> จับที่พยุงมั่นคงและถ่ายน้ำหนักลงขาข้างที่ฝึก",
+    "check.miniSingleLegSquat.depth": "<strong>ความลึก:</strong> งอเข่าเพียงเล็กน้อยโดยให้เข่าอยู่แนวเดียวกับปลายเท้า",
+    "check.miniSingleLegSquat.safety": "<strong>ตรวจความปลอดภัย:</strong> หยุดหากเข่ายุบเข้าใน คลิกแบบเจ็บ หรือรู้สึกไม่มั่นคง",
     "monitoring.reminder": "หยุดและทำตามคำแนะนำของนักกายภาพบำบัด หากมีอาการปวดข้อแบบแปลบ บวมมากขึ้น หรือมีเสียงคลิก/เสียงเสียดสีระหว่างเซสชัน",
     "check.monitor.immediate": "<strong>ทันทีหลังทำเสร็จ:</strong> ข้อเข่ารู้สึกมั่นคง และไม่มีอาการตุบ ๆ หรือปวดแปลบเพิ่มขึ้น",
     "check.monitor.morning": "<strong>ตรวจเช้าวันถัดไป:</strong> เข่าไม่บวม ไม่ตึง และไม่ฝืด",
@@ -439,11 +660,15 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: "#progress-heading", key: "progress.heading" },
   { selector: "#exercise-progress-heading", key: "exercise.progressHeading" },
   { selector: ".exercise-progress-header .meta-label", key: "exercise.progressMeta" },
+  { selector: '[data-exercise-progress="quad-set"] strong', key: "exercise.quad-set" },
   { selector: '[data-exercise-progress="wall"] strong', key: "exercise.wall" },
   { selector: '[data-exercise-progress="slr"] strong', key: "exercise.slr" },
   { selector: '[data-exercise-progress="bridge"] strong', key: "exercise.bridge" },
   { selector: '[data-exercise-progress="clam"] strong', key: "exercise.clam" },
-  { selector: ".calendar-header .meta-label", key: "calendar.meta" },
+  { selector: '[data-exercise-progress="side-leg-lift"] strong', key: "exercise.side-leg-lift" },
+  { selector: '[data-exercise-progress="chair-squat"] strong', key: "exercise.chair-squat" },
+  { selector: '[data-exercise-progress="mini-single-leg-squat"] strong', key: "exercise.mini-single-leg-squat" },
+  { selector: '.calendar-card[aria-labelledby="calendar-heading"] .calendar-header .meta-label', key: "calendar.meta" },
   { selector: "#calendar-heading", key: "calendar.heading" },
   { selector: ".calendar-nav", key: "calendar.navLabel", attr: "aria-label" },
   { selector: "#calendar-prev", key: "calendar.previous", attr: "aria-label" },
@@ -451,6 +676,42 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: ".selected-day-panel .meta-label", key: "calendar.selectedDay" },
   { selector: "#daily-plan-heading", key: "plan.heading" },
   { selector: "#daily-plan-heading + p", key: "plan.description" },
+  { selector: "#phase-1-foundation .phase-number", key: "phase.one.number" },
+  { selector: "#phase-1-foundation h3", key: "phase.one.title" },
+  { selector: "#phase-1-foundation p", key: "phase.one.goal" },
+  { selector: "#phase-1-foundation strong", key: "phase.one.exercises" },
+  { selector: "#phase-2-static-load .phase-number", key: "phase.two.number" },
+  { selector: "#phase-2-static-load h3", key: "phase.two.title" },
+  { selector: "#phase-2-static-load p", key: "phase.two.goal" },
+  { selector: "#phase-2-static-load strong", key: "phase.two.exercises" },
+  { selector: "#phase-3-dynamic-control .phase-number", key: "phase.three.number" },
+  { selector: "#phase-3-dynamic-control h3", key: "phase.three.title" },
+  { selector: "#phase-3-dynamic-control p", key: "phase.three.goal" },
+  { selector: "#phase-3-dynamic-control strong", key: "phase.three.exercises" },
+  { selector: '.assessment-card .assessment-header .meta-label', key: "assessment.meta" },
+  { selector: "#assessment-heading", key: "assessment.heading" },
+  { selector: "#assessment-heading + p", key: "assessment.description" },
+  { selector: 'label[for="pain-level"]', key: "assessment.painLevel" },
+  { selector: 'label[for="injury-history"]', key: "assessment.injuryHistory" },
+  { selector: 'label[for="commitment-days"]', key: "assessment.commitmentDays" },
+  { selector: 'label[for="support-available"] span', key: "assessment.supportAvailable" },
+  { selector: "#assessment-save", key: "assessment.save" },
+  { selector: '#weekly-schedule-panel .calendar-header .meta-label', key: "schedule.meta" },
+  { selector: "#weekly-schedule-heading", key: "schedule.heading" },
+  { selector: "#daily-log-heading", key: "dailyLog.heading" },
+  { selector: "#daily-log-heading + p", key: "dailyLog.description" },
+  { selector: 'label[for="pain-before"]', key: "dailyLog.painBefore" },
+  { selector: 'label[for="pain-after"]', key: "dailyLog.painAfter" },
+  { selector: 'label[for="swelling-status"]', key: "dailyLog.swellingStatus" },
+  { selector: '#swelling-status option[value="none"]', key: "dailyLog.swelling.none" },
+  { selector: '#swelling-status option[value="mild"]', key: "dailyLog.swelling.mild" },
+  { selector: '#swelling-status option[value="increased"]', key: "dailyLog.swelling.increased" },
+  { selector: 'label[for="sharp-pain"] span', key: "dailyLog.sharpPain" },
+  { selector: 'label[for="phase-completed"]', key: "dailyLog.phaseCompleted" },
+  { selector: '#phase-completed option[value="1"]', key: "dailyLog.phaseOption.one" },
+  { selector: '#phase-completed option[value="2"]', key: "dailyLog.phaseOption.two" },
+  { selector: '#phase-completed option[value="3"]', key: "dailyLog.phaseOption.three" },
+  { selector: "#daily-log-save", key: "dailyLog.save" },
   { selector: ".exercise-summary:nth-of-type(1) h3", key: "summary.wall.title", html: true },
   { selector: ".exercise-summary:nth-of-type(2) h3", key: "summary.slr.title", html: true },
   { selector: ".exercise-summary:nth-of-type(3) h3", key: "summary.bridge.title", html: true },
@@ -470,21 +731,36 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: ".exercise-summary:nth-of-type(4) dl > div:nth-child(1) dd", key: "summary.clam.volume", html: true },
   { selector: ".exercise-summary:nth-of-type(4) dl > div:nth-child(2) dd", key: "summary.clam.timing" },
   { selector: ".exercise-summary:nth-of-type(4) dl > div:nth-child(3) dd", key: "summary.clam.focus" },
-  { selector: "#wall-sit-heading", key: "section.wall.title" },
-  { selector: "#wall-sit-heading + p", key: "section.wall.subtitle" },
+  { selector: "#quad-set-heading", key: "section.quad-set.title" },
+  { selector: "#quad-set-heading + p", key: "section.quad-set.subtitle" },
   { selector: "#slr-heading", key: "section.slr.title" },
   { selector: "#slr-heading + p", key: "section.slr.subtitle" },
   { selector: "#bridge-heading", key: "section.bridge.title" },
   { selector: "#bridge-heading + p", key: "section.bridge.subtitle" },
   { selector: "#clam-heading", key: "section.clam.title" },
   { selector: "#clam-heading + p", key: "section.clam.subtitle" },
+  { selector: "#side-leg-lift-heading", key: "section.side-leg-lift.title" },
+  { selector: "#side-leg-lift-heading + p", key: "section.side-leg-lift.subtitle" },
+  { selector: "#wall-sit-heading", key: "section.wall.title" },
+  { selector: "#wall-sit-heading + p", key: "section.wall.subtitle" },
+  { selector: "#chair-squat-heading", key: "section.chair-squat.title" },
+  { selector: "#chair-squat-heading + p", key: "section.chair-squat.subtitle" },
+  { selector: "#mini-single-leg-squat-heading", key: "section.mini-single-leg-squat.title" },
+  { selector: "#mini-single-leg-squat-heading + p", key: "section.mini-single-leg-squat.subtitle" },
   { selector: "#monitoring-heading", key: "section.monitoring.title" },
   { selector: "#monitoring-heading + p", key: "section.monitoring.subtitle" },
+  { selector: "#quad-set-set-heading", key: "sets.quad-set" },
   { selector: "#wall-set-heading", key: "sets.wall" },
   { selector: "#slr-set-heading", key: "sets.slr" },
   { selector: "#bridge-set-heading", key: "sets.bridge" },
   { selector: "#clam-set-heading", key: "sets.clam" },
+  { selector: "#side-leg-lift-set-heading", key: "sets.side-leg-lift" },
+  { selector: "#chair-squat-set-heading", key: "sets.chair-squat" },
+  { selector: "#mini-single-leg-squat-set-heading", key: "sets.mini-single-leg-squat" },
   { selector: '[id$="-set-reset"]', key: "sets.reset" },
+  { selector: 'label[for="quad-set-setup"]', key: "check.quadSet.setup", html: true },
+  { selector: 'label[for="quad-set-vmo"]', key: "check.quadSet.vmo", html: true },
+  { selector: 'label[for="quad-set-safety"]', key: "check.quadSet.safety", html: true },
   { selector: 'label[for="wall-setup"]', key: "check.wall.setup", html: true },
   { selector: 'label[for="wall-angle"]', key: "check.wall.angle", html: true },
   { selector: 'label[for="wall-foot-position"]', key: "check.wall.foot", html: true },
@@ -504,6 +780,15 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: 'label[for="clam-hip-stack"]', key: "check.clam.stack", html: true },
   { selector: 'label[for="clam-control"]', key: "check.clam.control", html: true },
   { selector: 'label[for="clam-safety-check"]', key: "check.clam.safety", html: true },
+  { selector: 'label[for="side-leg-lift-setup"]', key: "check.sideLegLift.setup", html: true },
+  { selector: 'label[for="side-leg-lift-control"]', key: "check.sideLegLift.control", html: true },
+  { selector: 'label[for="side-leg-lift-safety"]', key: "check.sideLegLift.safety", html: true },
+  { selector: 'label[for="chair-squat-support"]', key: "check.chairSquat.support", html: true },
+  { selector: 'label[for="chair-squat-hip-hinge"]', key: "check.chairSquat.hipHinge", html: true },
+  { selector: 'label[for="chair-squat-safety"]', key: "check.chairSquat.safety", html: true },
+  { selector: 'label[for="mini-single-leg-squat-support"]', key: "check.miniSingleLegSquat.support", html: true },
+  { selector: 'label[for="mini-single-leg-squat-depth"]', key: "check.miniSingleLegSquat.depth", html: true },
+  { selector: 'label[for="mini-single-leg-squat-safety"]', key: "check.miniSingleLegSquat.safety", html: true },
   { selector: ".safety-reminder", key: "monitoring.reminder" },
   { selector: 'label[for="monitor-immediate"]', key: "check.monitor.immediate", html: true },
   { selector: 'label[for="monitor-next-morning"]', key: "check.monitor.morning", html: true },
@@ -565,7 +850,10 @@ const t = (key, values = {}) => {
   return interpolate(value, values);
 };
 
-const getExerciseLabel = (exerciseId) => t(`exercise.${exerciseId}`);
+const getExerciseLabel = (exerciseId) => {
+  const key = `exercise.${exerciseId}`;
+  return translations[currentLanguage]?.[key] ?? translations[DEFAULT_LANGUAGE]?.[key] ?? exerciseId;
+};
 
 const getStatusKey = (status) => {
   if (status === "Finished" || status === "finished") return "status.finished";
@@ -713,6 +1001,15 @@ const refreshLocalizedDynamicText = () => {
   if (document.getElementById("sync-auth-panel")) {
     renderSyncAuthState();
   }
+  if (document.getElementById("assessment-status")) {
+    renderAssessmentStatus();
+  }
+  if (document.getElementById("weekly-schedule-list")) {
+    renderWeeklySchedule();
+  }
+  if (document.getElementById("safety-alert")) {
+    restoreDailyLog();
+  }
 };
 
 const setLanguage = (language) => {
@@ -759,106 +1056,40 @@ const audioCueState = {
 };
 
 const SET_ROW_CONFIG = {
-  wall: { totalReps: 10, workDurationSec: 30, restDurationSec: 15, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Rep" },
+  "quad-set": { totalReps: 10, workDurationSec: 5, restDurationSec: 5, workCue: "Squeeze", restCue: "Relax", activeTargetPrefix: "Rep" },
   slr: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Hold", restCue: "Relax", activeTargetPrefix: "HOLD! - Rep" },
   bridge: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
-  clam: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Open", restCue: "Relax", activeTargetPrefix: "Rep" }
+  clam: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Open", restCue: "Relax", activeTargetPrefix: "Rep" },
+  "side-leg-lift": { totalReps: 15, workDurationSec: 3, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
+  wall: { totalReps: 4, workDurationSec: 20, restDurationSec: 60, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Set" },
+  "chair-squat": { totalReps: 10, workDurationSec: 3, restDurationSec: 3, workCue: "Lower", restCue: "Stand", activeTargetPrefix: "Rep" },
+  "mini-single-leg-squat": { totalReps: 10, workDurationSec: 3, restDurationSec: 3, workCue: "Lower", restCue: "Stand", activeTargetPrefix: "Rep" }
 };
+
+const SET_ID_NUMBER_SUFFIX_PATTERN = /-\d+$/;
+
+const getExerciseIdFromSetId = (setId) => REHAB_EXERCISES
+  .find((exercise) => exercise.setIds.includes(setId))
+  ?.id || setId.replace(SET_ID_NUMBER_SUFFIX_PATTERN, "");
 
 const getSetRowConfig = (setId) => {
-  const trackerId = setId.split("-")[0];
-  return SET_ROW_CONFIG[trackerId] || SET_ROW_CONFIG.slr;
+  const exerciseId = getExerciseIdFromSetId(setId);
+  return SET_ROW_CONFIG[exerciseId] || SET_ROW_CONFIG.slr;
 };
 
-const exerciseSetTrackers = [
-  {
-    id: "wall",
-    label: "Wall Sit",
-    totalSets: 2,
-    sets: [
-      { id: "wall-1", target: "10 reps" },
-      { id: "wall-2", target: "10 reps" }
-    ]
-  },
-  {
-    id: "slr",
-    label: "Straight Leg Raise",
-    totalSets: 3,
-    sets: [
-      { id: "slr-1", target: "15 reps" },
-      { id: "slr-2", target: "15 reps" },
-      { id: "slr-3", target: "15 reps" }
-    ]
-  },
-  {
-    id: "bridge",
-    label: "Glute Bridges",
-    totalSets: 2,
-    sets: [
-      { id: "bridge-1", target: "15 reps" },
-      { id: "bridge-2", target: "15 reps" }
-    ]
-  },
-  {
-    id: "clam",
-    label: "Clamshells",
-    totalSets: 2,
-    sets: [
-      { id: "clam-1", target: "15 reps" },
-      { id: "clam-2", target: "15 reps" }
-    ]
-  }
-];
+const exerciseSetTrackers = REHAB_EXERCISES.map((exercise) => ({
+  id: exercise.id,
+  label: exercise.id,
+  totalSets: exercise.setIds.length,
+  sets: exercise.setIds.map((setId) => ({ id: setId, target: exercise.target }))
+}));
 
-const exerciseProgressGroups = [
-  {
-    id: "wall",
-    label: "Wall Sit",
-    setIds: ["wall-1", "wall-2"],
-    checkIds: [
-      "wall-setup",
-      "wall-angle",
-      "wall-foot-position",
-      "wall-data-check",
-      "wall-safety-check"
-    ]
-  },
-  {
-    id: "slr",
-    label: "Straight Leg Raise",
-    setIds: ["slr-1", "slr-2", "slr-3"],
-    checkIds: [
-      "slr-setup",
-      "slr-lock-twist",
-      "slr-tempo-lift",
-      "slr-tempo-hold",
-      "slr-tempo-lower",
-      "slr-data-check"
-    ]
-  },
-  {
-    id: "bridge",
-    label: "Glute Bridges",
-    setIds: ["bridge-1", "bridge-2"],
-    checkIds: [
-      "bridge-setup",
-      "bridge-core",
-      "bridge-lift",
-      "bridge-safety-check"
-    ]
-  },
-  {
-    id: "clam",
-    label: "Clamshells",
-    setIds: ["clam-1", "clam-2"],
-    checkIds: [
-      "clam-setup",
-      "clam-hip-stack",
-      "clam-control",
-      "clam-safety-check"
-    ]
-  }
-];
+const exerciseProgressGroups = REHAB_EXERCISES.map((exercise) => ({
+  id: exercise.id,
+  label: exercise.id,
+  setIds: exercise.setIds,
+  checkIds: exercise.checkIds
+}));
 
 let setRowIntervalId = null;
 
@@ -871,17 +1102,27 @@ const calendarState = {
   sessionHistory: {}
 };
 
-const setRowState = {
-  "wall-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
-  "wall-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 10, currentRep: 1, repState: "work", timeRemainingSec: 30, workDurationSec: 30, restDurationSec: 15 },
-  "slr-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "slr-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "slr-3": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "bridge-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "bridge-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "clam-1": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 },
-  "clam-2": { elapsedMs: 0, startedAt: null, isRunning: false, isDone: false, isRepLoop: true, totalReps: 15, currentRep: 1, repState: "work", timeRemainingSec: 5, workDurationSec: 5, restDurationSec: 3 }
-};
+const createInitialSetRowState = () => REHAB_EXERCISES.reduce((rows, exercise) => {
+  exercise.setIds.forEach((setId) => {
+    const config = getSetRowConfig(setId);
+    rows[setId] = {
+      elapsedMs: 0,
+      startedAt: null,
+      isRunning: false,
+      isDone: false,
+      isRepLoop: true,
+      totalReps: config.totalReps,
+      currentRep: 1,
+      repState: "work",
+      timeRemainingSec: config.workDurationSec,
+      workDurationSec: config.workDurationSec,
+      restDurationSec: config.restDurationSec
+    };
+  });
+  return rows;
+}, {});
+
+const setRowState = createInitialSetRowState();
 
 const formatDateTime = (value) => {
   if (!value) return t("session.notStartedYet");
@@ -1475,6 +1716,14 @@ const saveActiveSessionHistory = (options = {}) => {
 
 const saveTodaySessionHistory = saveActiveSessionHistory;
 
+const saveActiveSessionHistoryLocalOnly = (options = {}) => {
+  const dateKey = getActiveDateKey();
+  if (!dateKey || isFutureDateKey(dateKey)) return;
+
+  calendarState.sessionHistory[dateKey] = createCurrentSessionHistoryRecord(dateKey, options);
+  writeSessionHistory();
+};
+
 const saveSelectedDateCompletionHistory = (dateKey, completed) => {
   if (!dateKey) return;
 
@@ -1576,6 +1825,67 @@ const saveSupabaseDate = async (dateKey) => {
     setSyncStatus(t("sync.statusSaved"), "connected");
   } catch (error) {
     console.warn("Could not save Supabase session.", error);
+    setSyncStatus(t("sync.statusError"), "error");
+  }
+};
+
+const isPlainObject = (value) => value && typeof value === "object" && !Array.isArray(value);
+
+const createSupabaseProfileRow = () => ({
+  user_id: syncState.user.id,
+  assessment: readJsonStorage(STORAGE_KEYS.assessment, {}),
+  weekly_schedule: readJsonStorage(STORAGE_KEYS.weeklySchedule, []),
+  safety_events: readJsonStorage(STORAGE_KEYS.safetyEvents, []),
+  updated_at: new Date().toISOString()
+});
+
+const saveSupabaseProfile = async () => {
+  if (!canUseSupabaseSync()) return;
+
+  try {
+    setSyncStatus(t("sync.statusSaving"));
+    const { error } = await syncState.client
+      .from(SUPABASE_PROFILE_TABLE)
+      .upsert(createSupabaseProfileRow(), { onConflict: "user_id" });
+
+    if (error) throw error;
+    setSyncStatus(t("sync.statusSaved"), "connected");
+  } catch (error) {
+    console.warn("Could not save rehab profile.", error);
+    setSyncStatus(t("sync.statusError"), "error");
+  }
+};
+
+const loadSupabaseProfile = async () => {
+  if (!canUseSupabaseSync()) return;
+
+  try {
+    const { data, error } = await syncState.client
+      .from(SUPABASE_PROFILE_TABLE)
+      .select("*")
+      .eq("user_id", syncState.user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return;
+
+    const assessment = isPlainObject(data.assessment) ? data.assessment : {};
+    const weeklySchedule = Array.isArray(data.weekly_schedule) ? data.weekly_schedule : [];
+    const safetyEvents = Array.isArray(data.safety_events) ? data.safety_events : [];
+
+    syncState.isApplyingRemote = true;
+    localStorage.setItem(STORAGE_KEYS.assessment, JSON.stringify(assessment));
+    localStorage.setItem(STORAGE_KEYS.weeklySchedule, JSON.stringify(weeklySchedule));
+    localStorage.setItem(STORAGE_KEYS.safetyEvents, JSON.stringify(safetyEvents));
+    if (typeof data.updated_at === "string") {
+      localStorage.setItem(STORAGE_KEYS.profileLastUpdated, data.updated_at);
+    }
+    restoreAssessment();
+    renderWeeklySchedule();
+    syncState.isApplyingRemote = false;
+  } catch (error) {
+    syncState.isApplyingRemote = false;
+    console.warn("Could not load rehab profile.", error);
     setSyncStatus(t("sync.statusError"), "error");
   }
 };
@@ -1717,6 +2027,7 @@ const handleSupabaseSession = async (session) => {
 
   if (nextUser && nextUser.id !== previousUserId) {
     await loadSupabaseSessions();
+    await loadSupabaseProfile();
   }
 };
 
@@ -1928,7 +2239,10 @@ const setSessionEditingDisabled = (isDisabled) => {
     "#clear-notes",
     "#timer-toggle",
     "#timer-reset",
-    "#session-notes"
+    "#session-notes",
+    "#daily-log-form input",
+    "#daily-log-form select",
+    "#daily-log-form button"
   ].join(",")).forEach((element) => {
     element.disabled = isDisabled;
   });
@@ -1948,6 +2262,7 @@ const applySelectedDateSession = () => {
     renderTimer();
     renderSetRows();
     updateProgress();
+    restoreDailyLog();
     return;
   }
 
@@ -1958,6 +2273,7 @@ const applySelectedDateSession = () => {
   renderSetRows();
   ensureSetRowInterval();
   updateProgress();
+  restoreDailyLog();
 };
 
 const selectCalendarDate = (dateKey) => {
@@ -2089,6 +2405,147 @@ const renderCalendar = () => {
 
   renderSelectedDay();
   renderTodayCompletionButton();
+};
+
+const clampNumber = (value, min, max) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return min;
+  return Math.min(max, Math.max(min, Math.round(number)));
+};
+
+const readJsonStorage = (key, fallback) => {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : JSON.parse(value);
+  } catch (error) {
+    console.warn(`Could not parse ${key}. Resetting value.`, error);
+    localStorage.removeItem(key);
+    return fallback;
+  }
+};
+
+const getAssessmentSnapshot = () => ({
+  painLevel: clampNumber(document.getElementById("pain-level")?.value, 0, 10),
+  injuryHistory: String(document.getElementById("injury-history")?.value || "").trim(),
+  commitmentDays: clampNumber(document.getElementById("commitment-days")?.value, 1, 7),
+  supportAvailable: document.getElementById("support-available")?.checked === true
+});
+
+const SCHEDULE_FOCUS_KEYS = {
+  foundation: "schedule.focus.foundation",
+  static: "schedule.focus.static",
+  dynamic: "schedule.focus.dynamic"
+};
+
+const LEGACY_SCHEDULE_FOCUS_KEYS = {
+  "Foundation activation": SCHEDULE_FOCUS_KEYS.foundation,
+  "Static wall support": SCHEDULE_FOCUS_KEYS.static,
+  "Supported dynamic control": SCHEDULE_FOCUS_KEYS.dynamic
+};
+
+const generateWeeklySchedule = (assessment) => {
+  const days = clampNumber(assessment.commitmentDays, 1, 7);
+  const maxPhase = assessment.supportAvailable && assessment.painLevel <= PROGRESSION_RULES.maxPainForProgression ? 3 : 1;
+  return Array.from({ length: days }, (_, index) => ({
+    dayNumber: index + 1,
+    phaseNumber: maxPhase === 1 ? 1 : index < 2 ? 1 : index < 4 ? 2 : 3,
+    focusKey: maxPhase === 1
+      ? SCHEDULE_FOCUS_KEYS.foundation
+      : index < 2
+        ? SCHEDULE_FOCUS_KEYS.foundation
+        : index < 4
+          ? SCHEDULE_FOCUS_KEYS.static
+          : SCHEDULE_FOCUS_KEYS.dynamic
+  }));
+};
+
+const saveAssessment = (assessment) => {
+  const schedule = generateWeeklySchedule(assessment);
+  localStorage.setItem(STORAGE_KEYS.assessment, JSON.stringify(assessment));
+  localStorage.setItem(STORAGE_KEYS.weeklySchedule, JSON.stringify(schedule));
+  localStorage.setItem(STORAGE_KEYS.profileLastUpdated, new Date().toISOString());
+  renderWeeklySchedule();
+  saveSupabaseProfile();
+};
+
+const isValidWeeklyScheduleEntry = (day) => {
+  if (!day || typeof day !== "object" || Array.isArray(day)) return false;
+  if (!Number.isInteger(day.dayNumber) || day.dayNumber < 1 || day.dayNumber > 7) return false;
+  if (!Number.isInteger(day.phaseNumber) || day.phaseNumber < 1 || day.phaseNumber > 3) return false;
+  return typeof day.focusKey === "string" || typeof day.focus === "string";
+};
+
+const renderWeeklyScheduleEmptyState = (container) => {
+  const message = document.createElement("p");
+  message.className = "muted-text";
+  message.textContent = t("schedule.empty");
+  container.replaceChildren(message);
+};
+
+const getScheduleFocusText = (day) => {
+  const focusKey = day.focusKey || LEGACY_SCHEDULE_FOCUS_KEYS[day.focus];
+  return focusKey ? t(focusKey) : String(day.focus || "");
+};
+
+const renderWeeklySchedule = () => {
+  const container = document.getElementById("weekly-schedule-list");
+  if (!container) return;
+
+  const schedule = readJsonStorage(STORAGE_KEYS.weeklySchedule, []);
+  const safeSchedule = Array.isArray(schedule) ? schedule.filter(isValidWeeklyScheduleEntry) : [];
+  if (safeSchedule.length === 0) {
+    renderWeeklyScheduleEmptyState(container);
+    return;
+  }
+
+  const rows = safeSchedule.map((day) => {
+    const row = document.createElement("article");
+    const dayLabel = document.createElement("strong");
+    const phaseLabel = document.createElement("span");
+    const focus = document.createElement("p");
+
+    row.className = "schedule-row";
+    dayLabel.textContent = t("schedule.dayLabel", { number: day.dayNumber });
+    phaseLabel.textContent = t("schedule.phaseLabel", { number: day.phaseNumber });
+    focus.textContent = getScheduleFocusText(day);
+
+    row.append(dayLabel, phaseLabel, focus);
+    return row;
+  });
+
+  container.replaceChildren(...rows);
+};
+
+const restoreAssessment = () => {
+  const assessment = readJsonStorage(STORAGE_KEYS.assessment, null);
+  if (!assessment) return;
+
+  const painLevel = document.getElementById("pain-level");
+  const injuryHistory = document.getElementById("injury-history");
+  const commitmentDays = document.getElementById("commitment-days");
+  const supportAvailable = document.getElementById("support-available");
+
+  if (painLevel) painLevel.value = String(assessment.painLevel ?? "");
+  if (injuryHistory) injuryHistory.value = assessment.injuryHistory || "";
+  if (commitmentDays) commitmentDays.value = String(assessment.commitmentDays ?? "");
+  if (supportAvailable) supportAvailable.checked = assessment.supportAvailable === true;
+};
+
+const renderAssessmentStatus = (isSaved = readJsonStorage(STORAGE_KEYS.assessment, null) !== null) => {
+  const status = document.getElementById("assessment-status");
+  if (status) status.textContent = t(isSaved ? "assessment.statusSaved" : "assessment.statusNotSaved");
+};
+
+const setupAssessment = () => {
+  restoreAssessment();
+  renderAssessmentStatus();
+  renderWeeklySchedule();
+
+  document.getElementById("assessment-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveAssessment(getAssessmentSnapshot());
+    renderAssessmentStatus(true);
+  });
 };
 
 const setupCalendar = () => {
@@ -2232,21 +2689,37 @@ const playAudioCue = (message, frequency = 800, duration = 0.15) => {
   playCueBeep(frequency, duration);
 };
 
+const CUE_TRANSLATION_KEYS = {
+  Hold: "cue.hold",
+  Resting: "cue.resting",
+  Relax: "cue.relax",
+  Lift: "cue.lift",
+  Open: "cue.open"
+};
+
+const getCueTranslationKey = (cue) => CUE_TRANSLATION_KEYS[cue] || "";
+
 const getWorkCueKey = (setId) => {
-  const trackerId = setId.split("-")[0];
-  if (trackerId === "bridge") return "cue.lift";
-  if (trackerId === "clam") return "cue.open";
-  return "cue.hold";
+  const config = getSetRowConfig(setId);
+  return getCueTranslationKey(config.workCue);
 };
 
 const getRestCueKey = (setId) => {
-  const trackerId = setId.split("-")[0];
-  return trackerId === "wall" ? "cue.resting" : "cue.relax";
+  const config = getSetRowConfig(setId);
+  return getCueTranslationKey(config.restCue);
 };
 
-const getWorkCueMessage = (setId) => t(getWorkCueKey(setId));
+const getTranslatedCueMessage = (cue, translationKey) => translationKey ? t(translationKey) : cue;
 
-const getRestCueMessage = (setId) => t(getRestCueKey(setId));
+const getWorkCueMessage = (setId) => {
+  const config = getSetRowConfig(setId);
+  return getTranslatedCueMessage(config.workCue, getWorkCueKey(setId));
+};
+
+const getRestCueMessage = (setId) => {
+  const config = getSetRowConfig(setId);
+  return getTranslatedCueMessage(config.restCue, getRestCueKey(setId));
+};
 
 const playCurrentPhaseCue = (setId) => {
   const state = getSetRowState(setId);
@@ -2353,6 +2826,12 @@ const getSetRowControl = (setId, suffix, selector) => {
   return document.getElementById(`${setId}-${suffix}`) || row?.querySelector(selector);
 };
 
+const getSetNumberFromTracker = (setId, exerciseId) => {
+  const tracker = exerciseSetTrackers.find((item) => item.id === exerciseId);
+  const setIndex = tracker?.sets.findIndex((item) => item.id === setId) ?? -1;
+  return setIndex >= 0 ? String(setIndex + 1) : setId.replace(getExerciseIdFromSetId(setId), "").replace(/^-/, "");
+};
+
 const renderSetRow = (set) => {
   const rowState = getSetRowState(set.id);
   if (!rowState) return;
@@ -2395,10 +2874,10 @@ const renderSetRow = (set) => {
 
   if (toggle) {
     toggle.textContent = rowState.isRunning ? "❚❚" : "▶";
-    const trackerId = set.id.split("-")[0];
-    const setNumber = set.id.split("-")[1] || "";
+    const exerciseId = getExerciseIdFromSetId(set.id);
+    const setNumber = getSetNumberFromTracker(set.id, exerciseId);
     toggle.setAttribute("aria-label", t(rowState.isRunning ? "set.pauseLabel" : "set.startLabel", {
-      exercise: getExerciseLabel(trackerId),
+      exercise: getExerciseLabel(exerciseId),
       number: setNumber
     }));
   }
@@ -2572,6 +3051,105 @@ const setupSetRows = () => {
   document.getElementById("reset-all-sets")?.addEventListener("click", resetAllSetRows);
 };
 
+const readDailyLogs = () => {
+  const logs = readJsonStorage(STORAGE_KEYS.dailyLogs, {});
+  return logs && typeof logs === "object" && !Array.isArray(logs) ? logs : {};
+};
+
+const writeDailyLogs = (logs) => {
+  localStorage.setItem(STORAGE_KEYS.dailyLogs, JSON.stringify(logs));
+};
+
+const readRequiredPainValue = (elementId) => {
+  const value = document.getElementById(elementId)?.value;
+  if (typeof value !== "string" || value.trim() === "") return null;
+
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+
+  return Math.min(10, Math.max(0, Math.round(number)));
+};
+
+const getDailyLogSnapshot = () => ({
+  dateKey: getActiveDateKey(),
+  painBefore: readRequiredPainValue("pain-before"),
+  painAfter: readRequiredPainValue("pain-after"),
+  swellingStatus: document.getElementById("swelling-status")?.value || "none",
+  sharpPain: document.getElementById("sharp-pain")?.checked === true,
+  phaseCompleted: clampNumber(document.getElementById("phase-completed")?.value, 1, 3),
+  updatedAt: new Date().toISOString()
+});
+
+const evaluateSafetyGuardrails = (log) => {
+  if (!Number.isFinite(log.painBefore) || !Number.isFinite(log.painAfter)) {
+    return t("safety.missingPain");
+  }
+
+  const painIncrease = log.painAfter - log.painBefore;
+  const exceedsStablePainLimit = log.painBefore > PROGRESSION_RULES.maxPainForProgression
+    || log.painAfter > PROGRESSION_RULES.maxPainForProgression;
+  if (log.sharpPain && PROGRESSION_RULES.sharpPainBlocksProgression) {
+    return t("safety.sharpPain");
+  }
+  if (log.swellingStatus === "increased" && PROGRESSION_RULES.swellingBlocksProgression) {
+    return t("safety.swelling");
+  }
+  if (exceedsStablePainLimit || painIncrease > PROGRESSION_RULES.maxPainIncrease) {
+    return t("safety.painLimit");
+  }
+  return t("safety.alertStable");
+};
+
+const saveDailyLog = (log) => {
+  if (!log.dateKey || isFutureDateKey(log.dateKey)) return;
+
+  const logs = readDailyLogs();
+  logs[log.dateKey] = log;
+  writeDailyLogs(logs);
+
+  const alert = document.getElementById("safety-alert");
+  if (alert) alert.textContent = evaluateSafetyGuardrails(log);
+
+  saveActiveSessionHistoryLocalOnly();
+  renderSessionHistory();
+  saveLastUpdated();
+};
+
+const restoreDailyLog = () => {
+  const log = readDailyLogs()[getActiveDateKey()];
+  const painBefore = document.getElementById("pain-before");
+  const painAfter = document.getElementById("pain-after");
+  const swellingStatus = document.getElementById("swelling-status");
+  const sharpPain = document.getElementById("sharp-pain");
+  const phaseCompleted = document.getElementById("phase-completed");
+  const alert = document.getElementById("safety-alert");
+
+  if (!log) {
+    if (painBefore) painBefore.value = "";
+    if (painAfter) painAfter.value = "";
+    if (swellingStatus) swellingStatus.value = "none";
+    if (sharpPain) sharpPain.checked = false;
+    if (phaseCompleted) phaseCompleted.value = "1";
+    if (alert) alert.textContent = "";
+    return;
+  }
+
+  if (painBefore) painBefore.value = String(log.painBefore ?? "");
+  if (painAfter) painAfter.value = String(log.painAfter ?? "");
+  if (swellingStatus) swellingStatus.value = log.swellingStatus || "none";
+  if (sharpPain) sharpPain.checked = log.sharpPain === true;
+  if (phaseCompleted) phaseCompleted.value = String(log.phaseCompleted ?? 1);
+  if (alert) alert.textContent = evaluateSafetyGuardrails(log);
+};
+
+const setupDailyLog = () => {
+  restoreDailyLog();
+  document.getElementById("daily-log-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveDailyLog(getDailyLogSnapshot());
+  });
+};
+
 const setupNotes = () => {
   const notes = document.getElementById("session-notes");
   const storedNotes = localStorage.getItem(STORAGE_KEYS.notes);
@@ -2692,11 +3270,13 @@ const setupSessionMeta = () => {
 document.addEventListener("DOMContentLoaded", () => {
   setupLanguageSwitcher();
   setupSessionMeta();
+  setupAssessment();
   setupCalendar();
   restoreChecklist();
   setupChecklistListeners();
   setupChecklistCollapse();
   setupVoiceCues();
+  setupDailyLog();
   setupNotes();
   setupReset();
   setupTimer();

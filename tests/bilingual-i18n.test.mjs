@@ -35,6 +35,17 @@ assert.match(
   "script should define setupLanguageSwitcher"
 );
 
+assert.match(html, /id="assessment-save"/, "assessment submit button should have a stable translation ID");
+assert.match(html, /id="daily-log-save"/, "daily log submit button should have a stable translation ID");
+assert.doesNotMatch(script, /selector: "#assessment-form button"/, "assessment translation selector should not target a generic form button");
+assert.doesNotMatch(script, /selector: "#daily-log-form button"/, "daily log translation selector should not target a generic form button");
+assert.match(script, /#phase-1-foundation \.phase-number/, "phase one number should be translated by selector");
+assert.match(script, /#phase-2-static-load h3/, "phase two title should be translated by selector");
+assert.match(script, /#phase-3-dynamic-control p/, "phase three goal should be translated by selector");
+assert.match(script, /t\("schedule\.dayLabel"/, "generated schedule day labels should use translations");
+assert.match(script, /SCHEDULE_FOCUS_KEYS/, "generated schedule focus text should use translation keys");
+assert.match(script, /t\("safety\.missingPain"/, "missing pain safety text should use translations");
+
 class MockElement {
   constructor(id, attributes = {}) {
     this.id = id;

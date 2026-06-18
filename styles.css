@@ -409,6 +409,110 @@ h1 {
   gap: 0.9rem;
 }
 
+.assessment-card {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.assessment-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.assessment-header h2,
+.assessment-header p {
+  margin: 0;
+}
+
+.assessment-header p {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.assessment-form,
+.daily-log-form,
+.weekly-schedule-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.assessment-form label,
+.daily-log-form label {
+  color: var(--text);
+  font-weight: 850;
+}
+
+.assessment-form input,
+.assessment-form textarea,
+.daily-log-form input,
+.daily-log-form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--card);
+}
+
+.assessment-form textarea {
+  resize: vertical;
+}
+
+.safety-alert {
+  min-height: 2.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(249, 115, 22, 0.32);
+  border-radius: 12px;
+  color: #9a3412;
+  background: var(--warning-soft);
+  font-weight: 750;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-weight: 750;
+}
+
+.checkbox-row input {
+  width: 1.2rem;
+  min-height: 1.2rem;
+  margin-top: 0.2rem;
+  accent-color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.schedule-row {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.schedule-row span {
+  color: var(--primary);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.schedule-row p,
+.muted-text {
+  margin: 0;
+  color: var(--muted);
+}
+
 .calendar-header,
 .calendar-actions {
   display: flex;
@@ -670,6 +774,37 @@ main {
 .exercise-grid {
   display: grid;
   gap: 1rem;
+}
+
+.phase-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.phase-summary {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.phase-number {
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.phase-summary h3,
+.phase-summary p {
+  margin: 0;
+}
+
+.phase-summary p {
+  color: var(--muted);
 }
 
 .exercise-summary {

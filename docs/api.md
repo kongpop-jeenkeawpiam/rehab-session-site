@@ -4,7 +4,7 @@ This project is a static browser app. It does not expose custom HTTP routes or a
 server-side API. Its integration contract is made of:
 
 - the optional Supabase browser API used for cloud sync;
-- the `rehab_sessions` database table;
+- the `rehab_sessions` and `rehab_profiles` database tables;
 - the browser `localStorage` keys used for offline state;
 - the DOM IDs and events that `script.js` expects.
 
@@ -46,13 +46,15 @@ Sync operations only run when a Supabase client exists and a user is signed in.
 
 ## Supabase Data API
 
-All cloud data is stored in the `public.rehab_sessions` table.
+Cloud data is split across daily session rows and user-level profile state.
 
 | Operation | Supabase query |
 | --- | --- |
 | Load sessions | `from("rehab_sessions").select("*").eq("user_id", user.id).order("date_key", { ascending: true })` |
 | Save one session | `from("rehab_sessions").upsert(row, { onConflict: "user_id,date_key" })` |
 | Seed local sessions after first sign-in | `from("rehab_sessions").upsert(rows, { onConflict: "user_id,date_key" })` |
+| Load profile | `from("rehab_profiles").select("*").eq("user_id", user.id).maybeSingle()` |
+| Save profile | `from("rehab_profiles").upsert(row, { onConflict: "user_id" })` |
 
 The row-level security policies in `supabase-schema.sql` restrict select,
 insert, update, and delete operations to rows where `auth.uid() = user_id`.
@@ -60,6 +62,8 @@ insert, update, and delete operations to rows where `auth.uid() = user_id`.
 ## Database Schema
 
 Source: `supabase-schema.sql`
+
+### `public.rehab_sessions`
 
 | Column | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -87,6 +91,50 @@ Index:
 ```sql
 rehab_sessions_user_date_idx on public.rehab_sessions (user_id, date_key)
 ```
+
+### `public.rehab_profiles`
+
+| Column | Type | Required | Description |
+| --- | --- | --- | --- |
+| `user_id` | `uuid` | Yes | Primary key, references `auth.users(id)`, and cascades on user deletion. |
+| `assessment` | `jsonb` | Yes | Saved pain level, injury history, commitment days, and support availability from `kneeRehabAssessment`. |
+| `weekly_schedule` | `jsonb` | Yes | Generated conservative day-by-day phase schedule from `kneeRehabWeeklySchedule`. |
+| `safety_events` | `jsonb` | Yes | Safety guardrail events from `kneeRehabSafetyEvents`. |
+| `updated_at` | `timestamptz` | Yes | Current profile sync timestamp generated when the profile row is saved. |
+
+Profile rows are user-level state, not daily logs. Daily completion records,
+checklists, timers, set rows, notes, and per-date log history stay out of
+`rehab_profiles` and continue to use local storage or `rehab_sessions`.
+
+## Profile Row Shape
+
+`script.js` creates profile rows with this shape before calling Supabase
+`upsert`.
+
+```json
+{
+  "user_id": "00000000-0000-0000-0000-000000000000",
+  "assessment": {
+    "painLevel": 2,
+    "injuryHistory": "No surgery",
+    "commitmentDays": 5,
+    "supportAvailable": true
+  },
+  "weekly_schedule": [
+    {
+      "dayNumber": 1,
+      "phaseNumber": 1,
+      "focus": "Foundation activation"
+    }
+  ],
+  "safety_events": [],
+  "updated_at": "2026-06-12T00:00:00.000Z"
+}
+```
+
+When a signed-in user loads a profile, invalid or missing `assessment`,
+`weekly_schedule`, and `safety_events` values are replaced with safe defaults.
+The assessment form and weekly schedule are re-rendered from the loaded profile.
 
 ## Session Row Shape
 
@@ -160,6 +208,11 @@ client-side persistence contract.
 | `kneeRehabVoiceCuesEnabled` | string boolean | `"true"` or `"false"`. |
 | `kneeRehabChecklistCollapseState` | JSON object | Checklist section ID to collapsed boolean. |
 | `kneeRehabLanguage` | string | Supported language code: `en` or `th`. |
+| `kneeRehabAssessment` | JSON object | Pain level, injury history, commitment days, and support availability. |
+| `kneeRehabWeeklySchedule` | JSON array | Generated day-by-day phase schedule. |
+| `kneeRehabDailyLogs` | JSON object | Date-keyed symptom and phase completion logs. |
+| `kneeRehabSafetyEvents` | JSON array | Safety guardrail events for profile sync. |
+| `kneeRehabProfileLastUpdated` | ISO datetime string | Last local or synced profile update timestamp. |
 
 Invalid JSON in structured keys is handled defensively: the app removes or
 replaces corrupted values and continues with defaults.
@@ -170,10 +223,14 @@ Checklist state is keyed by stable checkbox IDs.
 
 | Group | IDs |
 | --- | --- |
+| Quad Set | `quad-set-setup`, `quad-set-vmo`, `quad-set-safety` |
+| Side Lying Leg Lift | `side-leg-lift-setup`, `side-leg-lift-control`, `side-leg-lift-safety` |
 | Wall Sit | `wall-setup`, `wall-angle`, `wall-foot-position`, `wall-data-check`, `wall-safety-check` |
 | Straight Leg Raise | `slr-setup`, `slr-lock-twist`, `slr-tempo-lift`, `slr-tempo-hold`, `slr-tempo-lower`, `slr-data-check` |
 | Glute Bridges | `bridge-setup`, `bridge-core`, `bridge-lift`, `bridge-safety-check` |
 | Clamshells | `clam-setup`, `clam-hip-stack`, `clam-control`, `clam-safety-check` |
+| Chair Squat | `chair-squat-support`, `chair-squat-hip-hinge`, `chair-squat-safety` |
+| Mini Single Leg Squat | `mini-single-leg-squat-support`, `mini-single-leg-squat-depth`, `mini-single-leg-squat-safety` |
 | Monitoring | `monitor-immediate`, `monitor-next-morning`, `monitor-walking` |
 
 ## Set Row IDs
@@ -182,10 +239,14 @@ Set row state is keyed by stable set IDs.
 
 | Exercise | Set IDs | Work/rest timing |
 | --- | --- | --- |
-| Wall Sit | `wall-1`, `wall-2` | 30 seconds work, 15 seconds rest, 10 reps |
+| Quad Set | `quad-set-1`, `quad-set-2`, `quad-set-3` | 5 seconds work, 5 seconds rest, 10 reps |
+| Side Lying Leg Lift | `side-leg-lift-1`, `side-leg-lift-2`, `side-leg-lift-3` | 3 seconds work, 3 seconds rest, 15 reps |
+| Wall Sit | `wall-1`, `wall-2`, `wall-3`, `wall-4` | 20 seconds work, 60 seconds rest, 4 sets |
 | Straight Leg Raise | `slr-1`, `slr-2`, `slr-3` | 5 seconds work, 3 seconds rest, 15 reps |
-| Glute Bridges | `bridge-1`, `bridge-2` | 5 seconds work, 3 seconds rest, 15 reps |
-| Clamshells | `clam-1`, `clam-2` | 5 seconds work, 3 seconds rest, 15 reps |
+| Glute Bridges | `bridge-1`, `bridge-2`, `bridge-3` | 5 seconds work, 3 seconds rest, 15 reps |
+| Clamshells | `clam-1`, `clam-2`, `clam-3` | 5 seconds work, 3 seconds rest, 15 reps |
+| Chair Squat | `chair-squat-1` | 3 seconds work, 3 seconds rest, 10 reps |
+| Mini Single Leg Squat | `mini-single-leg-squat-1`, `mini-single-leg-squat-2` | 3 seconds work, 3 seconds rest, 10 reps |
 
 ## DOM Integration Contract
 
@@ -197,8 +258,11 @@ must stay stable unless the script is updated at the same time.
 | Supabase auth | `sync-auth-form`, `sync-email`, `sync-password`, `sync-sign-in`, `sync-sign-up`, `sync-sign-out`, `sync-status`, `sync-user` |
 | Session summary | `session-date`, `last-updated`, `session-timer`, `timer-toggle`, `timer-reset` |
 | Voice cues | `voice-cues-toggle`, `voice-cues-status` |
+| Recovery setup | `assessment-form`, `assessment-status`, `pain-level`, `injury-history`, `commitment-days`, `support-available`, `assessment-save` |
+| Generated schedule | `weekly-schedule-panel`, `weekly-schedule-heading`, `weekly-schedule-list` |
 | Progress | `completed-count`, `total-count`, `progress-fill` |
 | Calendar | `calendar-prev`, `calendar-next`, `calendar-month`, `calendar-grid`, `mark-today-complete`, `selected-calendar-date`, `toggle-selected-complete`, `session-history-panel` |
+| Daily log | `daily-log-form`, `pain-before`, `pain-after`, `swelling-status`, `sharp-pain`, `phase-completed`, `safety-alert`, `daily-log-save` |
 | Notes and reset | `session-notes`, `clear-notes`, `reset-checklist`, `reset-all-sets` |
 
 Checklist toggles also depend on `.checklist-toggle[aria-controls]`, and set row
