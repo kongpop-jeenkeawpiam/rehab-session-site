@@ -75,7 +75,7 @@
       <section class="progress-card" aria-labelledby="progress-heading">
         <div class="progress-heading-row">
           <h2 id="progress-heading">Progress</h2>
-          <p id="progress-text" aria-live="polite">Progress: <span id="completed-count">0</span> / <span id="total-count">22</span> completed</p>
+          <p id="progress-text" aria-live="polite">Progress: <span id="completed-count">0</span> / <span id="total-count">34</span> completed</p>
         </div>
         <div class="progress-track" aria-hidden="true">
           <div id="progress-fill" class="progress-fill"></div>
@@ -88,35 +88,94 @@
           </div>
 
           <div class="exercise-progress-list" aria-live="polite">
-            <div class="exercise-progress-row" data-exercise-progress="wall">
-              <strong>Wall Sit</strong>
-              <span><span id="wall-progress-sets">0 / 2</span> sets</span>
-              <span><span id="wall-progress-checks">0 / 5</span> checks</span>
-              <span id="wall-progress-status" class="status-badge">Not started</span>
+            <div class="exercise-progress-row" data-exercise-progress="quad-set">
+              <strong>Quad Set</strong>
+              <span><span id="quad-set-progress-sets">0 / 3</span> sets</span>
+              <span><span id="quad-set-progress-checks">0 / 3</span> checks</span>
+              <span id="quad-set-progress-status" class="status-badge">Not started</span>
             </div>
-
             <div class="exercise-progress-row" data-exercise-progress="slr">
               <strong>Straight Leg Raise</strong>
               <span><span id="slr-progress-sets">0 / 3</span> sets</span>
               <span><span id="slr-progress-checks">0 / 6</span> checks</span>
               <span id="slr-progress-status" class="status-badge">Not started</span>
             </div>
-
             <div class="exercise-progress-row" data-exercise-progress="bridge">
               <strong>Glute Bridges</strong>
-              <span><span id="bridge-progress-sets">0 / 2</span> sets</span>
+              <span><span id="bridge-progress-sets">0 / 3</span> sets</span>
               <span><span id="bridge-progress-checks">0 / 4</span> checks</span>
               <span id="bridge-progress-status" class="status-badge">Not started</span>
             </div>
-
             <div class="exercise-progress-row" data-exercise-progress="clam">
               <strong>Clamshells</strong>
-              <span><span id="clam-progress-sets">0 / 2</span> sets</span>
+              <span><span id="clam-progress-sets">0 / 3</span> sets</span>
               <span><span id="clam-progress-checks">0 / 4</span> checks</span>
               <span id="clam-progress-status" class="status-badge">Not started</span>
             </div>
+            <div class="exercise-progress-row" data-exercise-progress="side-leg-lift">
+              <strong>Side Lying Leg Lift</strong>
+              <span><span id="side-leg-lift-progress-sets">0 / 3</span> sets</span>
+              <span><span id="side-leg-lift-progress-checks">0 / 3</span> checks</span>
+              <span id="side-leg-lift-progress-status" class="status-badge">Not started</span>
+            </div>
+            <div class="exercise-progress-row" data-exercise-progress="wall">
+              <strong>Wall Sit</strong>
+              <span><span id="wall-progress-sets">0 / 4</span> sets</span>
+              <span><span id="wall-progress-checks">0 / 5</span> checks</span>
+              <span id="wall-progress-status" class="status-badge">Not started</span>
+            </div>
+            <div class="exercise-progress-row" data-exercise-progress="chair-squat">
+              <strong>Chair Squat</strong>
+              <span><span id="chair-squat-progress-sets">0 / 1</span> sets</span>
+              <span><span id="chair-squat-progress-checks">0 / 3</span> checks</span>
+              <span id="chair-squat-progress-status" class="status-badge">Not started</span>
+            </div>
+            <div class="exercise-progress-row" data-exercise-progress="mini-single-leg-squat">
+              <strong>Mini Single Leg Squat with Support</strong>
+              <span><span id="mini-single-leg-squat-progress-sets">0 / 2</span> sets</span>
+              <span><span id="mini-single-leg-squat-progress-checks">0 / 3</span> checks</span>
+              <span id="mini-single-leg-squat-progress-status" class="status-badge">Not started</span>
+            </div>
           </div>
         </div>
+      </section>
+
+      <section class="assessment-card" aria-labelledby="assessment-heading">
+        <div class="assessment-header">
+          <div>
+            <span class="meta-label">Assessment</span>
+            <h2 id="assessment-heading">Recovery Setup</h2>
+            <p>Use these answers to generate a conservative weekly progression.</p>
+          </div>
+          <span id="assessment-status" class="status-badge">Not saved</span>
+        </div>
+        <form id="assessment-form" class="assessment-form">
+          <label for="pain-level">Current knee pain, 0-10</label>
+          <input type="number" id="pain-level" min="0" max="10" step="1" inputmode="numeric" />
+
+          <label for="injury-history">Knee injury history</label>
+          <textarea id="injury-history" rows="3" placeholder="Example: patellar tracking pain for 3 months, no surgery."></textarea>
+
+          <label for="commitment-days">Days per week you can commit</label>
+          <input type="number" id="commitment-days" min="1" max="7" step="1" inputmode="numeric" />
+
+          <label class="checkbox-row" for="support-available">
+            <input type="checkbox" id="support-available" />
+            <span>I have stable support available for standing exercises.</span>
+          </label>
+
+          <button type="submit" id="assessment-save" class="button primary-button">Save setup</button>
+        </form>
+      </section>
+
+      <section id="weekly-schedule-panel" class="calendar-card" aria-labelledby="weekly-schedule-heading">
+        <div class="calendar-header">
+          <div>
+            <span class="meta-label">Weekly schedule</span>
+            <h2 id="weekly-schedule-heading">Generated Progression</h2>
+          </div>
+        </div>
+        <div id="weekly-schedule-list" class="weekly-schedule-list" aria-live="polite"></div>
       </section>
 
       <section class="calendar-card" aria-labelledby="calendar-heading">
@@ -158,85 +217,101 @@
     <main>
       <section class="card plan-card" aria-labelledby="daily-plan-heading">
         <div class="section-heading">
-          <span class="section-icon" aria-hidden="true">📅</span>
+          <span class="section-icon" aria-hidden="true">P</span>
           <div>
-            <h2 id="daily-plan-heading">Daily Rehabilitation Plan</h2>
-            <p>Perform these exercises daily from today until your next physical therapy session.</p>
+            <h2 id="daily-plan-heading">Three-Phase Rehab Plan</h2>
+            <p>Progress from zero-load activation to supported dynamic control only when safety checks stay stable.</p>
           </div>
         </div>
 
-        <div class="exercise-grid">
-          <article class="exercise-summary">
-            <h3>1. Wall Sit <span>(Shallow Angle)</span></h3>
-            <dl>
-              <div>
-                <dt>Volume / Dosage</dt>
-                <dd>Hold 30 sec × 10 reps <br><strong>Total: 2 Sets</strong></dd>
-              </div>
-              <div>
-                <dt>Recommended Timing</dt>
-                <dd>After returning to dorm / Before bed</dd>
-              </div>
-              <div>
-                <dt>Primary Focus</dt>
-                <dd>Maintain a 50:50 weight distribution between both legs.</dd>
-              </div>
-            </dl>
+        <div class="phase-grid">
+          <article id="phase-1-foundation" class="phase-summary">
+            <span class="phase-number">Phase 1</span>
+            <h3>Neuromuscular Activation and Zero-Load Foundation</h3>
+            <p>Switch on the muscles without placing compressive force on the knee joint surface.</p>
+            <strong>Quad Set, Straight Leg Raise, Glute Bridges, Clamshell, Side Lying Leg Lift</strong>
           </article>
+          <article id="phase-2-static-load" class="phase-summary">
+            <span class="phase-number">Phase 2</span>
+            <h3>Static Weight-Bearing</h3>
+            <p>Safely tune and align the VMO vertically with wall support.</p>
+            <strong>Wall Sit, 3-4 sets, 15-20 seconds</strong>
+          </article>
+          <article id="phase-3-dynamic-control" class="phase-summary">
+            <span class="phase-number">Phase 3</span>
+            <h3>Dynamic Vertical Load Control</h3>
+            <p>Practice supported real-world movement with shallow range and strict control.</p>
+            <strong>Chair Squat and Mini Single Leg Squat with Support</strong>
+          </article>
+        </div>
+      </section>
 
-          <article class="exercise-summary">
-            <h3>2. Straight Leg Raise <span>(SLR)</span></h3>
-            <dl>
-              <div>
-                <dt>Volume / Dosage</dt>
-                <dd>Hold 5 sec × 15 reps <br><strong>Total: 3 Sets</strong></dd>
-              </div>
-              <div>
-                <dt>Recommended Timing</dt>
-                <dd>While relaxing / Watching basketball highlights</dd>
-              </div>
-              <div>
-                <dt>Primary Focus</dt>
-                <dd>Turn toes out 15° to activate the inner thigh muscle (<strong>VMO</strong>).</dd>
-              </div>
-            </dl>
-          </article>
+      <section class="card checklist-card accent-green" aria-labelledby="quad-set-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">Q</span>
+          <div>
+            <h2 id="quad-set-heading">Exercise 1: Quad Set</h2>
+            <p>VMO activation without joint load</p>
+          </div>
+          <button type="button" id="quad-set-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="quad-set-checklist">Hide Checklist</button>
+        </div>
 
-          <article class="exercise-summary">
-            <h3>3. Glute Bridges</h3>
-            <dl>
-              <div>
-                <dt>Volume / Dosage</dt>
-                <dd>15 reps <br><strong>Total: 2 Sets</strong></dd>
-              </div>
-              <div>
-                <dt>Recommended Timing</dt>
-                <dd>After Wall Sit or before bed</dd>
-              </div>
-              <div>
-                <dt>Primary Focus</dt>
-                <dd>Squeeze glutes to lift the hips without arching the lower back.</dd>
-              </div>
-            </dl>
-          </article>
+        <div class="set-tracker" data-set-tracker="quad-set" role="group" aria-labelledby="quad-set-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="quad-set-set-heading">Quad Set Sets</h3>
+              <p><span id="quad-set-set-count">0</span> / <span id="quad-set-set-total">3</span> sets</p>
+            </div>
+            <button type="button" id="quad-set-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
 
-          <article class="exercise-summary">
-            <h3>4. Clamshells</h3>
-            <dl>
-              <div>
-                <dt>Volume / Dosage</dt>
-                <dd>15 reps per side <br><strong>Total: 2 Sets</strong></dd>
-              </div>
-              <div>
-                <dt>Recommended Timing</dt>
-                <dd>After Glute Bridges or while relaxing</dd>
-              </div>
-              <div>
-                <dt>Primary Focus</dt>
-                <dd>Keep hips stacked and move from the outside hip without rolling backward.</dd>
-              </div>
-            </dl>
-          </article>
+          <div class="set-row" data-set-row="quad-set-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="quad-set-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="quad-set-1-toggle" class="set-play-button" aria-label="Start Quad Set set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="quad-set-1-done" aria-label="Quad Set set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="quad-set-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="quad-set-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="quad-set-2-toggle" class="set-play-button" aria-label="Start Quad Set set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="quad-set-2-done" aria-label="Quad Set set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="quad-set-3">
+            <span class="set-number" aria-label="Set 3">3</span>
+            <span id="quad-set-3-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="quad-set-3-toggle" class="set-play-button" aria-label="Start Quad Set set 3">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="quad-set-3-done" aria-label="Quad Set set 3 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="quad-set-checklist" class="checklist" data-section="Quad Set">
+          <div class="check-item">
+            <input type="checkbox" id="quad-set-setup" data-checklist-item />
+            <label for="quad-set-setup"><strong>Setup:</strong> Sit or lie with the injured leg straight and supported.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="quad-set-vmo" data-checklist-item />
+            <label for="quad-set-vmo"><strong>VMO:</strong> Tighten the thigh and gently push the knee down until the inner thigh switches on.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="quad-set-safety" data-checklist-item />
+            <label for="quad-set-safety"><strong>Safety Check:</strong> Keep the kneecap tracking straight and stop if joint pain appears.</label>
+          </div>
         </div>
       </section>
 
@@ -244,7 +319,7 @@
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🟢</span>
           <div>
-            <h2 id="wall-sit-heading">Exercise 1: Wall Sit</h2>
+            <h2 id="wall-sit-heading">Exercise 6: Wall Sit</h2>
             <p>Joint protection and balance tuning</p>
           </div>
           <button type="button" id="wall-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="wall-checklist">Hide Checklist</button>
@@ -254,7 +329,7 @@
           <div class="set-tracker-header">
             <div>
               <h3 id="wall-set-heading">Wall Sit Sets</h3>
-              <p><span id="wall-set-count">0</span> / <span id="wall-set-total">2</span> sets</p>
+              <p><span id="wall-set-count">0</span> / <span id="wall-set-total">4</span> sets</p>
             </div>
             <button type="button" id="wall-set-reset" class="button secondary-button">Reset Sets</button>
           </div>
@@ -277,6 +352,28 @@
             <button type="button" id="wall-set-2-toggle" class="set-play-button" aria-label="Start Wall Sit set 2">▶</button>
             <label class="set-done">
               <input type="checkbox" id="wall-set-2-done" aria-label="Wall Sit set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="wall-3">
+            <span class="set-number" aria-label="Set 3">3</span>
+            <span id="wall-3-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3-4 sets, 15-20 seconds</span>
+            <button type="button" id="wall-3-toggle" class="set-play-button" aria-label="Start Wall Sit set 3">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="wall-3-done" aria-label="Wall Sit set 3 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="wall-4">
+            <span class="set-number" aria-label="Set 4">4</span>
+            <span id="wall-4-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3-4 sets, 15-20 seconds</span>
+            <button type="button" id="wall-4-toggle" class="set-play-button" aria-label="Start Wall Sit set 4">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="wall-4-done" aria-label="Wall Sit set 4 done" />
               <span>Done</span>
             </label>
           </div>
@@ -401,7 +498,7 @@
           <div class="set-tracker-header">
             <div>
               <h3 id="bridge-set-heading">Glute Bridge Sets</h3>
-              <p><span id="bridge-set-count">0</span> / <span id="bridge-set-total">2</span> sets</p>
+              <p><span id="bridge-set-count">0</span> / <span id="bridge-set-total">3</span> sets</p>
             </div>
             <button type="button" id="bridge-set-reset" class="button secondary-button">Reset Sets</button>
           </div>
@@ -424,6 +521,17 @@
             <button type="button" id="bridge-2-toggle" class="set-play-button" aria-label="Start Glute Bridges set 2">▶</button>
             <label class="set-done">
               <input type="checkbox" id="bridge-2-done" aria-label="Glute Bridges set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="bridge-3">
+            <span class="set-number" aria-label="Set 3">3</span>
+            <span id="bridge-3-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="bridge-3-toggle" class="set-play-button" aria-label="Start Glute Bridges set 3">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="bridge-3-done" aria-label="Glute Bridges set 3 done" />
               <span>Done</span>
             </label>
           </div>
@@ -463,7 +571,7 @@
           <div class="set-tracker-header">
             <div>
               <h3 id="clam-set-heading">Clamshell Sets</h3>
-              <p><span id="clam-set-count">0</span> / <span id="clam-set-total">2</span> sets</p>
+              <p><span id="clam-set-count">0</span> / <span id="clam-set-total">3</span> sets</p>
             </div>
             <button type="button" id="clam-set-reset" class="button secondary-button">Reset Sets</button>
           </div>
@@ -489,6 +597,17 @@
               <span>Done</span>
             </label>
           </div>
+
+          <div class="set-row" data-set-row="clam-3">
+            <span class="set-number" aria-label="Set 3">3</span>
+            <span id="clam-3-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="clam-3-toggle" class="set-play-button" aria-label="Start Clamshells set 3">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="clam-3-done" aria-label="Clamshells set 3 done" />
+              <span>Done</span>
+            </label>
+          </div>
         </div>
 
         <div id="clam-checklist" class="checklist" data-section="Clamshells">
@@ -507,6 +626,180 @@
           <div class="check-item warning-item">
             <input type="checkbox" id="clam-safety-check" data-checklist-item />
             <label for="clam-safety-check"><strong>Safety Check:</strong> Stop if the knee twists, pinches, or feels unstable during the movement.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-blue" aria-labelledby="side-leg-lift-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">S</span>
+          <div>
+            <h2 id="side-leg-lift-heading">Exercise 5: Side Lying Leg Lift</h2>
+            <p>Hip abductor control with a quiet trunk</p>
+          </div>
+          <button type="button" id="side-leg-lift-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="side-leg-lift-checklist">Hide Checklist</button>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="side-leg-lift" role="group" aria-labelledby="side-leg-lift-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="side-leg-lift-set-heading">Side Lying Leg Lift Sets</h3>
+              <p><span id="side-leg-lift-set-count">0</span> / <span id="side-leg-lift-set-total">3</span> sets</p>
+            </div>
+            <button type="button" id="side-leg-lift-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="side-leg-lift-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="side-leg-lift-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="side-leg-lift-1-toggle" class="set-play-button" aria-label="Start Side Lying Leg Lift set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="side-leg-lift-1-done" aria-label="Side Lying Leg Lift set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="side-leg-lift-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="side-leg-lift-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="side-leg-lift-2-toggle" class="set-play-button" aria-label="Start Side Lying Leg Lift set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="side-leg-lift-2-done" aria-label="Side Lying Leg Lift set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="side-leg-lift-3">
+            <span class="set-number" aria-label="Set 3">3</span>
+            <span id="side-leg-lift-3-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">3 sets</span>
+            <button type="button" id="side-leg-lift-3-toggle" class="set-play-button" aria-label="Start Side Lying Leg Lift set 3">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="side-leg-lift-3-done" aria-label="Side Lying Leg Lift set 3 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="side-leg-lift-checklist" class="checklist" data-section="Side Lying Leg Lift">
+          <div class="check-item">
+            <input type="checkbox" id="side-leg-lift-setup" data-checklist-item />
+            <label for="side-leg-lift-setup"><strong>Setup:</strong> Lie on your side with the bottom knee bent and the top leg straight.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="side-leg-lift-control" data-checklist-item />
+            <label for="side-leg-lift-control"><strong>Control:</strong> Lift the top leg slowly without rolling the hips backward.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="side-leg-lift-safety" data-checklist-item />
+            <label for="side-leg-lift-safety"><strong>Safety Check:</strong> Stop if the knee twists, pinches, or feels unstable.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-green" aria-labelledby="chair-squat-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">C</span>
+          <div>
+            <h2 id="chair-squat-heading">Exercise 7: Chair Squat</h2>
+            <p>Supported hip hinge and shallow knee bend</p>
+          </div>
+          <button type="button" id="chair-squat-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="chair-squat-checklist">Hide Checklist</button>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="chair-squat" role="group" aria-labelledby="chair-squat-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="chair-squat-set-heading">Chair Squat Sets</h3>
+              <p><span id="chair-squat-set-count">0</span> / <span id="chair-squat-set-total">1</span> sets</p>
+            </div>
+            <button type="button" id="chair-squat-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="chair-squat-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="chair-squat-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">1 set, 10 reps</span>
+            <button type="button" id="chair-squat-1-toggle" class="set-play-button" aria-label="Start Chair Squat set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="chair-squat-1-done" aria-label="Chair Squat set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="chair-squat-checklist" class="checklist" data-section="Chair Squat">
+          <div class="check-item">
+            <input type="checkbox" id="chair-squat-support" data-checklist-item />
+            <label for="chair-squat-support"><strong>Support:</strong> Stand in front of a chair and keep stable support within reach.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="chair-squat-hip-hinge" data-checklist-item />
+            <label for="chair-squat-hip-hinge"><strong>Hip Hinge:</strong> Sit the hips back toward the chair while keeping knees aligned over toes.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="chair-squat-safety" data-checklist-item />
+            <label for="chair-squat-safety"><strong>Safety Check:</strong> Use a shallow range and stop if sharp joint pain appears.</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card checklist-card accent-blue" aria-labelledby="mini-single-leg-squat-heading">
+        <div class="section-heading compact">
+          <span class="section-icon" aria-hidden="true">M</span>
+          <div>
+            <h2 id="mini-single-leg-squat-heading">Exercise 8: Mini Single Leg Squat with Support</h2>
+            <p>Shallow single-leg control with stable support</p>
+          </div>
+          <button type="button" id="mini-single-leg-squat-checklist-toggle" class="checklist-toggle" aria-expanded="true" aria-controls="mini-single-leg-squat-checklist">Hide Checklist</button>
+        </div>
+
+        <div class="set-tracker" data-set-tracker="mini-single-leg-squat" role="group" aria-labelledby="mini-single-leg-squat-set-heading">
+          <div class="set-tracker-header">
+            <div>
+              <h3 id="mini-single-leg-squat-set-heading">Mini Single Leg Squat Sets</h3>
+              <p><span id="mini-single-leg-squat-set-count">0</span> / <span id="mini-single-leg-squat-set-total">2</span> sets</p>
+            </div>
+            <button type="button" id="mini-single-leg-squat-set-reset" class="button secondary-button">Reset Sets</button>
+          </div>
+
+          <div class="set-row" data-set-row="mini-single-leg-squat-1">
+            <span class="set-number" aria-label="Set 1">1</span>
+            <span id="mini-single-leg-squat-1-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">1-2 sets, 5-10 reps</span>
+            <button type="button" id="mini-single-leg-squat-1-toggle" class="set-play-button" aria-label="Start Mini Single Leg Squat with Support set 1">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="mini-single-leg-squat-1-done" aria-label="Mini Single Leg Squat with Support set 1 done" />
+              <span>Done</span>
+            </label>
+          </div>
+
+          <div class="set-row" data-set-row="mini-single-leg-squat-2">
+            <span class="set-number" aria-label="Set 2">2</span>
+            <span id="mini-single-leg-squat-2-timer" class="set-time" aria-live="polite">00:00</span>
+            <span class="set-target">1-2 sets, 5-10 reps</span>
+            <button type="button" id="mini-single-leg-squat-2-toggle" class="set-play-button" aria-label="Start Mini Single Leg Squat with Support set 2">▶</button>
+            <label class="set-done">
+              <input type="checkbox" id="mini-single-leg-squat-2-done" aria-label="Mini Single Leg Squat with Support set 2 done" />
+              <span>Done</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="mini-single-leg-squat-checklist" class="checklist" data-section="Mini Single Leg Squat with Support">
+          <div class="check-item">
+            <input type="checkbox" id="mini-single-leg-squat-support" data-checklist-item />
+            <label for="mini-single-leg-squat-support"><strong>Support:</strong> Hold stable support and shift weight onto the working leg.</label>
+          </div>
+          <div class="check-item">
+            <input type="checkbox" id="mini-single-leg-squat-depth" data-checklist-item />
+            <label for="mini-single-leg-squat-depth"><strong>Depth:</strong> Bend only a small amount while the knee stays aligned over the toes.</label>
+          </div>
+          <div class="check-item warning-item">
+            <input type="checkbox" id="mini-single-leg-squat-safety" data-checklist-item />
+            <label for="mini-single-leg-squat-safety"><strong>Safety Check:</strong> Stop if the knee caves inward, clicks painfully, or feels unstable.</label>
           </div>
         </div>
       </section>
@@ -539,6 +832,45 @@
             <label for="monitor-walking"><strong>Walking Check:</strong> Normal walking on flat ground feels smooth and pain-free.</label>
           </div>
         </div>
+      </section>
+
+      <section class="card daily-log-card" aria-labelledby="daily-log-heading">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true">L</span>
+          <div>
+            <h2 id="daily-log-heading">Daily Completion Log</h2>
+            <p>Record symptoms before marking a session complete.</p>
+          </div>
+        </div>
+        <form id="daily-log-form" class="daily-log-form">
+          <label for="pain-before">Pain before session, 0-10</label>
+          <input type="number" id="pain-before" min="0" max="10" step="1" inputmode="numeric" required />
+
+          <label for="pain-after">Pain after session, 0-10</label>
+          <input type="number" id="pain-after" min="0" max="10" step="1" inputmode="numeric" required />
+
+          <label for="swelling-status">Swelling or next-morning stiffness</label>
+          <select id="swelling-status">
+            <option value="none">None</option>
+            <option value="mild">Mild</option>
+            <option value="increased">Increased</option>
+          </select>
+
+          <label class="checkbox-row" for="sharp-pain">
+            <input type="checkbox" id="sharp-pain" />
+            <span>Sharp joint pain occurred during Phase 2 or Phase 3.</span>
+          </label>
+
+          <label for="phase-completed">Highest phase completed today</label>
+          <select id="phase-completed">
+            <option value="1">Phase 1</option>
+            <option value="2">Phase 2</option>
+            <option value="3">Phase 3</option>
+          </select>
+
+          <div id="safety-alert" class="safety-alert" role="status" aria-live="polite"></div>
+          <button type="submit" id="daily-log-save" class="button primary-button">Save daily log</button>
+        </form>
       </section>
 
       <section class="card notes-card" aria-labelledby="notes-heading">

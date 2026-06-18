@@ -2,6 +2,13 @@
 
 A free, static, mobile-friendly knee rehabilitation checklist website.
 
+## Features
+
+- The tracker uses a three-phase protocol: zero-load activation, static wall-supported loading, and supported dynamic control.
+- Recovery setup stores pain level, injury history, weekly commitment, and support availability.
+- A generated weekly schedule keeps progression conservative when pain, swelling, or support availability is not stable.
+- Daily logs record pain before and after, swelling, sharp pain, and the highest completed phase.
+
 ## Run locally
 
 ```bash
