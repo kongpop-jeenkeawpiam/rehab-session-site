@@ -229,23 +229,6 @@ h1 {
   background: #f8fbff;
 }
 
-.timer-panel {
-  display: grid;
-  gap: 0.75rem;
-}
-
-#session-timer {
-  font-variant-numeric: tabular-nums;
-  font-size: clamp(1.75rem, 6vw, 2.5rem);
-  line-height: 1;
-}
-
-.timer-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
 .voice-cue-panel {
   display: flex;
   flex-wrap: wrap;
