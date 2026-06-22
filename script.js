@@ -95,7 +95,7 @@ const REHAB_EXERCISES = [
   { id: "bridge", phaseId: "phase-1-foundation", setIds: ["bridge-1", "bridge-2", "bridge-3"], target: "3 sets", checkIds: ["bridge-setup", "bridge-core", "bridge-lift", "bridge-safety-check"] },
   { id: "clam", phaseId: "phase-1-foundation", setIds: ["clam-1", "clam-2", "clam-3"], target: "3 sets", checkIds: ["clam-setup", "clam-hip-stack", "clam-control", "clam-safety-check"] },
   { id: "side-leg-lift", phaseId: "phase-1-foundation", setIds: ["side-leg-lift-1", "side-leg-lift-2", "side-leg-lift-3"], target: "3 sets", checkIds: ["side-leg-lift-setup", "side-leg-lift-control", "side-leg-lift-safety"] },
-  { id: "wall", phaseId: "phase-2-static-load", setIds: ["wall-1", "wall-2", "wall-3", "wall-4"], target: "3-4 sets, 15-20 seconds", checkIds: ["wall-setup", "wall-angle", "wall-foot-position", "wall-data-check", "wall-safety-check"] },
+  { id: "wall", phaseId: "phase-2-static-load", setIds: ["wall-1", "wall-2"], target: "2 sets, 5 reps, 20 seconds", checkIds: ["wall-setup", "wall-angle", "wall-foot-position", "wall-data-check", "wall-safety-check"] },
   { id: "chair-squat", phaseId: "phase-3-dynamic-control", setIds: ["chair-squat-1"], target: "1 set, 10 reps", checkIds: ["chair-squat-support", "chair-squat-hip-hinge", "chair-squat-safety"] },
   { id: "mini-single-leg-squat", phaseId: "phase-3-dynamic-control", setIds: ["mini-single-leg-squat-1", "mini-single-leg-squat-2"], target: "1-2 sets, 5-10 reps", checkIds: ["mini-single-leg-squat-support", "mini-single-leg-squat-depth", "mini-single-leg-squat-safety"] }
 ];
@@ -183,7 +183,7 @@ const translations = {
     "phase.two.title": "Static Weight-Bearing",
     "phase.two.goal": "Safely tune and align the VMO vertically with wall support.",
     "phase.two.rest": "Rest 1 minute between sets.",
-    "phase.two.exercises": "Wall Sit, 3-4 sets, 15-20 seconds",
+    "phase.two.exercises": "Wall Sit, 2 sets, 5 reps, 20 seconds",
     "phase.three.number": "Phase 3",
     "phase.three.title": "Dynamic Vertical Load Control",
     "phase.three.goal": "Practice supported real-world movement with shallow range and strict control.",
@@ -230,7 +230,7 @@ const translations = {
     "summary.timing": "Recommended Timing",
     "summary.focus": "Primary Focus",
     "summary.wall.title": "1. Wall Sit <span>(Shallow Angle)</span>",
-    "summary.wall.volume": "Hold 30 sec × 10 reps <br><strong>Total: 2 Sets</strong>",
+    "summary.wall.volume": "Hold 20 sec × 5 reps <br><strong>Total: 2 Sets</strong>",
     "summary.wall.timing": "After returning to dorm / Before bed",
     "summary.wall.focus": "Maintain a 50:50 weight distribution between both legs.",
     "summary.slr.title": "2. Straight Leg Raise <span>(SLR)</span>",
@@ -299,7 +299,7 @@ const translations = {
     "check.wall.angle": "<strong>Angle:</strong> Slide down to a shallow angle (<strong>30°-45° only</strong>). Do <strong>not</strong> go down to a 90° deep squat. Keep knees behind your toes.",
     "check.wall.foot": "<strong>Foot Position:</strong> Feet are hip-width apart, or slightly wider, with toes pointed slightly outward (15°).",
     "check.wall.data": "<strong>Data Check:</strong> Mindfully press the foot of your injured leg firmly into the floor. Do not let your healthy leg steal the workload.",
-    "check.wall.safety": "<strong>Safety Check:</strong> During the 30-second hold, feel the burn only in the thigh muscles. There should be <strong>no sharp pain inside the joint</strong> and <strong>no clicking/grating sounds</strong>.",
+    "check.wall.safety": "<strong>Safety Check:</strong> During each 20-second hold, feel the burn only in the thigh muscles. There should be <strong>no sharp pain inside the joint</strong> and <strong>no clicking/grating sounds</strong>.",
     "check.slr.setup": "<strong>Setup:</strong> Lie flat on your back on the bed. Bend the knee of your healthy leg to stabilize your lower back.",
     "check.slr.lock": "<strong>Lock &amp; Twist:</strong> Fully lock the knee of your injured leg straight until the kneecap floats. Then rotate your entire foot outward by 15°.",
     "check.slr.lift": "<strong>Tempo - Lift:</strong> Lift the leg up slowly while counting 1-2-3, about 1 foot / 30 cm off the bed.",
@@ -333,6 +333,18 @@ const translations = {
     "notes.placeholder": "Example: Mild thigh burn only, no joint pain. Knee felt normal next morning.",
     "notes.clear": "Clear Notes",
     "notes.clearConfirm": "Clear session notes? Your checklist progress will stay saved.",
+    "todaySummary.heading": "Session Summary",
+    "todaySummary.pending": "Your summary will appear after you mark this session complete.",
+    "todaySummary.completed": "On {date}, you completed {exercises}. Session time: {duration}.",
+    "todaySummary.completedLegacy": "On {date}, you completed your session without detailed exercise data. Session time: {duration}.",
+    "todaySummary.exerciseSets": "{exercise} ({completed} of {total} sets)",
+    "todaySummary.exerciseSetsWithReps": "{exercise} ({completed} of {total} sets, {completedReps} of {totalReps} reps)",
+    "todaySummary.exerciseSetsWithRepsAndDuration": "{exercise} ({completed} of {total} sets, {completedReps} of {totalReps} reps, {seconds} seconds per rep)",
+    "todaySummary.copy": "Copy to Clipboard",
+    "todaySummary.copied": "Copied",
+    "todaySummary.copyFailed": "Could not copy summary",
+    "todaySummary.joinTwo": "{first} and {second}",
+    "todaySummary.joinMany": "{items}, and {last}",
     "footer.resetChecklist": "Reset Checklist",
     "footer.resetAllSets": "Reset all sets",
     "footer.note": "This tracker is for following your given rehab plan. It does not replace medical advice.",
@@ -441,7 +453,7 @@ const translations = {
     "phase.two.title": "ระยะที่ 2: ลงน้ำหนักคงที่",
     "phase.two.goal": "ฝึกแนวเข่าและ VMO อย่างระมัดระวังโดยใช้ผนังช่วยพยุง",
     "phase.two.rest": "พัก 1 นาทีระหว่างเซ็ต",
-    "phase.two.exercises": "Wall Sit, 3-4 เซ็ต, 15-20 วินาที",
+    "phase.two.exercises": "Wall Sit, 2 เซ็ต เซ็ตละ 5 ครั้ง ค้างครั้งละ 20 วินาที",
     "phase.three.number": "ระยะที่ 3",
     "phase.three.title": "ระยะที่ 3: ควบคุมแรงลงน้ำหนักขณะเคลื่อนไหว",
     "phase.three.goal": "ฝึกการเคลื่อนไหวจริงแบบมีที่พยุง ช่วงสั้น และควบคุมเข้มงวด",
@@ -488,7 +500,7 @@ const translations = {
     "summary.timing": "เวลาที่แนะนำ",
     "summary.focus": "จุดเน้นหลัก",
     "summary.wall.title": "1. Wall Sit <span>(มุมตื้น)</span>",
-    "summary.wall.volume": "ค้าง 30 วินาที × 10 ครั้ง <br><strong>รวม: 2 เซ็ต</strong>",
+    "summary.wall.volume": "ค้าง 20 วินาที × 5 ครั้ง <br><strong>รวม: 2 เซ็ต</strong>",
     "summary.wall.timing": "หลังกลับถึงหอพัก / ก่อนนอน",
     "summary.wall.focus": "รักษาการลงน้ำหนัก 50:50 ระหว่างขาทั้งสองข้าง",
     "summary.slr.title": "2. Straight Leg Raise <span>(SLR)</span>",
@@ -557,7 +569,7 @@ const translations = {
     "check.wall.angle": "<strong>มุมเข่า:</strong> เลื่อนตัวลงเป็นมุมตื้น (<strong>เฉพาะ 30°-45°</strong>) ห้ามลงลึกถึงท่าสควอต 90° ให้เข่าอยู่หลังปลายเท้า",
     "check.wall.foot": "<strong>ตำแหน่งเท้า:</strong> วางเท้ากว้างเท่าช่วงสะโพก หรือกว้างกว่าเล็กน้อย โดยให้ปลายเท้าชี้ออกเล็กน้อย (15°)",
     "check.wall.data": "<strong>ตรวจการลงน้ำหนัก:</strong> ตั้งใจกดฝ่าเท้าข้างที่บาดเจ็บลงพื้นให้มั่นคง อย่าให้ขาข้างที่ปกติแย่งรับแรง",
-    "check.wall.safety": "<strong>ตรวจความปลอดภัย:</strong> ระหว่างค้าง 30 วินาที ควรรู้สึกเมื่อยเฉพาะกล้ามเนื้อต้นขา ต้อง<strong>ไม่มีอาการปวดแปลบในข้อ</strong> และ<strong>ไม่มีเสียงคลิก/เสียงเสียดสี</strong>",
+    "check.wall.safety": "<strong>ตรวจความปลอดภัย:</strong> ระหว่างค้างครั้งละ 20 วินาที ควรรู้สึกเมื่อยเฉพาะกล้ามเนื้อต้นขา ต้อง<strong>ไม่มีอาการปวดแปลบในข้อ</strong> และ<strong>ไม่มีเสียงคลิก/เสียงเสียดสี</strong>",
     "check.slr.setup": "<strong>การจัดท่า:</strong> นอนหงายราบบนเตียง งอเข่าข้างที่ปกติเพื่อช่วยให้หลังส่วนล่างมั่นคง",
     "check.slr.lock": "<strong>ล็อกและหมุน:</strong> เหยียดเข่าข้างที่บาดเจ็บให้ตรงจนสุดจนลูกสะบ้าลอยขึ้น จากนั้นหมุนเท้าทั้งข้างออก 15°",
     "check.slr.lift": "<strong>จังหวะ - ยก:</strong> ยกขาขึ้นช้า ๆ พร้อมนับ 1-2-3 ให้สูงจากเตียงประมาณ 1 ฟุต / 30 ซม.",
@@ -591,6 +603,18 @@ const translations = {
     "notes.placeholder": "ตัวอย่าง: รู้สึกเมื่อยกล้ามเนื้อต้นขาเล็กน้อยเท่านั้น ไม่มีอาการปวดข้อ เข่ารู้สึกปกติในเช้าวันถัดไป",
     "notes.clear": "ล้างบันทึก",
     "notes.clearConfirm": "ล้างบันทึกเซสชันหรือไม่? ความคืบหน้ารายการตรวจสอบจะยังคงถูกบันทึกไว้",
+    "todaySummary.heading": "สรุปเซสชัน",
+    "todaySummary.pending": "สรุปจะแสดงหลังจากคุณทำเครื่องหมายว่าเซสชันนี้เสร็จแล้ว",
+    "todaySummary.completed": "วันที่ {date} คุณทำ {exercises} เวลารวมของเซสชัน: {duration}",
+    "todaySummary.completedLegacy": "วันที่ {date} คุณทำเซสชันเสร็จแล้วโดยไม่มีรายละเอียดการออกกำลังกาย เวลารวมของเซสชัน: {duration}",
+    "todaySummary.exerciseSets": "{exercise} ({completed} จาก {total} เซ็ต)",
+    "todaySummary.exerciseSetsWithReps": "{exercise} ({completed} จาก {total} เซ็ต, {completedReps} จาก {totalReps} ครั้ง)",
+    "todaySummary.exerciseSetsWithRepsAndDuration": "{exercise} ({completed} จาก {total} เซ็ต, {completedReps} จาก {totalReps} ครั้ง, ค้างครั้งละ {seconds} วินาที)",
+    "todaySummary.copy": "คัดลอกไปยังคลิปบอร์ด",
+    "todaySummary.copied": "คัดลอกแล้ว",
+    "todaySummary.copyFailed": "ไม่สามารถคัดลอกสรุปได้",
+    "todaySummary.joinTwo": "{first} และ {second}",
+    "todaySummary.joinMany": "{items} และ {last}",
     "footer.resetChecklist": "รีเซ็ตรายการตรวจ",
     "footer.resetAllSets": "รีเซ็ตทุกเซ็ต",
     "footer.note": "ตัวติดตามนี้มีไว้สำหรับทำตามแผนฟื้นฟูที่ได้รับ ไม่สามารถใช้แทนคำแนะนำทางการแพทย์ได้",
@@ -796,6 +820,8 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: "#notes-heading", key: "notes.heading" },
   { selector: "#notes-heading + p", key: "notes.description" },
   { selector: ".notes-label", key: "notes.label" },
+  { selector: "#todays-summary-heading", key: "todaySummary.heading" },
+  { selector: "#copy-session-summary", key: "todaySummary.copy" },
   { selector: "#clear-notes", key: "notes.clear" },
   { selector: "#reset-checklist", key: "footer.resetChecklist" },
   { selector: "#reset-all-sets", key: "footer.resetAllSets" },
@@ -1061,7 +1087,7 @@ const SET_ROW_CONFIG = {
   bridge: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
   clam: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Open", restCue: "Relax", activeTargetPrefix: "Rep" },
   "side-leg-lift": { totalReps: 15, workDurationSec: 3, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
-  wall: { totalReps: 4, workDurationSec: 20, restDurationSec: 60, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Set" },
+  wall: { totalReps: 5, workDurationSec: 20, restDurationSec: 60, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Rep" },
   "chair-squat": { totalReps: 10, workDurationSec: 3, restDurationSec: 3, workCue: "Lower", restCue: "Stand", activeTargetPrefix: "Rep" },
   "mini-single-leg-squat": { totalReps: 10, workDurationSec: 3, restDurationSec: 3, workCue: "Lower", restCue: "Stand", activeTargetPrefix: "Rep" }
 };
@@ -1380,19 +1406,29 @@ const applySetRowsSnapshot = (storedRows = {}) => {
     const totalReps = config.totalReps;
     const workDurationSec = config.workDurationSec;
     const restDurationSec = config.restDurationSec;
+    const dosageChanged = Number(storedState?.totalReps) !== totalReps
+      || Number(storedState?.workDurationSec) !== workDurationSec
+      || Number(storedState?.restDurationSec) !== restDurationSec;
+    const isDone = storedState?.isDone === true;
+    const storedRepState = storedState?.repState === "rest" ? "rest" : "work";
+    const phaseDurationSec = storedRepState === "rest" ? restDurationSec : workDurationSec;
 
     setRowState[set.id].elapsedMs = normalizeElapsedMs(storedState?.elapsedMs);
     setRowState[set.id].startedAt = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
     setRowState[set.id].isRunning = storedState?.isRunning === true && setRowState[set.id].startedAt !== null;
-    setRowState[set.id].isDone = storedState?.isDone === true;
+    setRowState[set.id].isDone = isDone;
 
     setRowState[set.id].isRepLoop = isRepLoop;
-    setRowState[set.id].totalReps = Number(storedState?.totalReps) || totalReps;
-    setRowState[set.id].currentRep = Number(storedState?.currentRep) || 1;
-    setRowState[set.id].repState = storedState?.repState || "work";
-    setRowState[set.id].timeRemainingSec = typeof storedState?.timeRemainingSec === "number" ? storedState.timeRemainingSec : workDurationSec;
-    setRowState[set.id].workDurationSec = Number(storedState?.workDurationSec) || workDurationSec;
-    setRowState[set.id].restDurationSec = Number(storedState?.restDurationSec) || restDurationSec;
+    setRowState[set.id].totalReps = totalReps;
+    setRowState[set.id].currentRep = isDone
+      ? totalReps
+      : dosageChanged ? 1 : clampNumber(storedState?.currentRep, 1, totalReps);
+    setRowState[set.id].repState = isDone ? "completed" : dosageChanged ? "work" : storedRepState;
+    setRowState[set.id].timeRemainingSec = isDone
+      ? 0
+      : dosageChanged ? workDurationSec : clampNumber(storedState?.timeRemainingSec, 0, phaseDurationSec);
+    setRowState[set.id].workDurationSec = workDurationSec;
+    setRowState[set.id].restDurationSec = restDurationSec;
     setRowState[set.id].isRunning = false; // keep it paused on refresh
   });
 };
@@ -2126,6 +2162,116 @@ const createHistoryText = (text, className) => {
   return element;
 };
 
+const getSummaryRepStats = (record, group) => {
+  const rows = group.setIds.map((setId) => ({
+    setId: setId,
+    state: record?.setRows?.[setId]
+  }));
+  if (rows.some(({ state }) => !state || typeof state !== "object")) return null;
+
+  return rows.reduce((stats, { setId, state }) => {
+    const config = getSetRowConfig(setId);
+    const totalReps = Number(state.totalReps) > 0 ? Number(state.totalReps) : config.totalReps;
+    const workDurationSec = Number(state.workDurationSec) > 0
+      ? Number(state.workDurationSec)
+      : config.workDurationSec;
+
+    stats.totalReps += totalReps;
+    stats.completedReps += state.isDone === true ? totalReps : 0;
+    stats.workDurationSec = stats.workDurationSec || workDurationSec;
+    return stats;
+  }, { completedReps: 0, totalReps: 0, workDurationSec: 0 });
+};
+
+const getTodaySummaryExerciseParts = (record) => exerciseProgressGroups
+  .map((group) => ({ group: group, exercise: record?.exercises?.[group.id] }))
+  .filter(({ exercise }) => Number(exercise?.completedSets) > 0)
+  .map(({ group, exercise }) => {
+    const values = {
+      exercise: getExerciseLabel(group.id),
+      completed: Number(exercise.completedSets),
+      total: Number(exercise.totalSets) || group.setIds.length
+    };
+    const repStats = getSummaryRepStats(record, group);
+    if (!repStats) return t("todaySummary.exerciseSets", values);
+
+    const key = group.id === "wall"
+      ? "todaySummary.exerciseSetsWithRepsAndDuration"
+      : "todaySummary.exerciseSetsWithReps";
+    return t(key, {
+      ...values,
+      completedReps: repStats.completedReps,
+      totalReps: repStats.totalReps,
+      seconds: repStats.workDurationSec
+    });
+  });
+
+const joinTodaySummaryParts = (parts) => {
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) {
+    return t("todaySummary.joinTwo", { first: parts[0], second: parts[1] });
+  }
+  return t("todaySummary.joinMany", {
+    items: parts.slice(0, -1).join(", "),
+    last: parts.at(-1)
+  });
+};
+
+const createTodaySummaryText = (record, dateKey = getTodayDateKey()) => {
+  const date = formatDisplayDate(dateKey);
+  const duration = formatTimer(record?.timer?.elapsedMs || 0);
+  const exerciseParts = getTodaySummaryExerciseParts(record);
+
+  if (exerciseParts.length === 0) {
+    return t("todaySummary.completedLegacy", { date: date, duration: duration });
+  }
+
+  return t("todaySummary.completed", {
+    date: date,
+    exercises: joinTodaySummaryParts(exerciseParts),
+    duration: duration
+  });
+};
+
+const renderSelectedSessionSummary = () => {
+  const dateElement = document.getElementById("todays-summary-date");
+  const summaryElement = document.getElementById("todays-summary-text");
+  if (!dateElement || !summaryElement) return;
+
+  const dateKey = calendarState.selectedDateKey;
+  dateElement.textContent = dateKey ? formatDisplayDate(dateKey) : t("calendar.selectDate");
+  summaryElement.textContent = dateKey && calendarState.completedDates.has(dateKey)
+    ? createTodaySummaryText(getSessionRecordForDate(dateKey), dateKey)
+    : t("todaySummary.pending");
+};
+
+const renderSessionSummaryCopyButton = () => {
+  const button = document.getElementById("copy-session-summary");
+  const status = document.getElementById("copy-session-summary-status");
+  if (!button) return;
+
+  const dateKey = calendarState.selectedDateKey;
+  button.disabled = !dateKey || !calendarState.completedDates.has(dateKey);
+  button.textContent = t("todaySummary.copy");
+  if (status) status.textContent = "";
+};
+
+const copySelectedSessionSummary = async () => {
+  const summaryElement = document.getElementById("todays-summary-text");
+  const status = document.getElementById("copy-session-summary-status");
+  const dateKey = calendarState.selectedDateKey;
+  if (!summaryElement || !status || !dateKey || !calendarState.completedDates.has(dateKey)) return;
+
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+    await navigator.clipboard.writeText(summaryElement.textContent);
+    status.textContent = t("todaySummary.copied");
+  } catch (error) {
+    console.warn("Could not copy session summary.", error);
+    status.textContent = t("todaySummary.copyFailed");
+  }
+};
+
 const renderExerciseHistory = (container, exercises) => {
   const list = document.createElement("div");
   list.className = "history-exercise-list";
@@ -2324,6 +2470,10 @@ const renderSelectedDay = () => {
     selectedDate.textContent = dateKey ? formatDisplayDate(dateKey) : t("calendar.selectDate");
   }
 
+  renderSelectedSessionSummary();
+  renderSelectedSessionCompletionButton();
+  renderSessionSummaryCopyButton();
+
   if (!toggleButton) return;
 
   const isFutureDate = dateKey ? isFutureDateKey(dateKey) : false;
@@ -2335,15 +2485,27 @@ const renderSelectedDay = () => {
 };
 
 const renderTodayCompletionButton = () => {
-  const markTodayButton = document.getElementById("mark-today-complete");
-  if (!markTodayButton) return;
+  const button = document.getElementById("mark-today-complete");
+  if (!button) return;
 
   const todayKey = getTodayDateKey();
   const isComplete = calendarState.completedDates.has(todayKey);
   const canMarkToday = getActiveDateKey() === todayKey && canCompleteToday() && !isComplete;
 
-  markTodayButton.disabled = !canMarkToday;
-  markTodayButton.textContent = isComplete ? t("calendar.todayCompleted") : t("calendar.markToday");
+  button.disabled = !canMarkToday;
+  button.textContent = isComplete ? t("calendar.todayCompleted") : t("calendar.markToday");
+};
+
+const renderSelectedSessionCompletionButton = () => {
+  const button = document.getElementById("summary-mark-today-complete");
+  if (!button) return;
+
+  const dateKey = calendarState.selectedDateKey;
+  const isCompleted = dateKey ? calendarState.completedDates.has(dateKey) : false;
+  const isFutureDate = dateKey ? isFutureDateKey(dateKey) : false;
+
+  button.disabled = !dateKey || isFutureDate || isCompleted;
+  button.textContent = isCompleted ? t("history.completed") : t("calendar.markComplete");
 };
 
 const renderCalendar = () => {
@@ -2574,6 +2736,13 @@ const setupCalendar = () => {
   });
 
   document.getElementById("mark-today-complete")?.addEventListener("click", markTodayComplete);
+  document.getElementById("summary-mark-today-complete")?.addEventListener("click", () => {
+    const dateKey = calendarState.selectedDateKey;
+    if (dateKey && !isFutureDateKey(dateKey) && !calendarState.completedDates.has(dateKey)) {
+      toggleDateCompletion(dateKey);
+    }
+  });
+  document.getElementById("copy-session-summary")?.addEventListener("click", copySelectedSessionSummary);
   document.getElementById("toggle-selected-complete")?.addEventListener("click", () => {
     toggleDateCompletion(calendarState.selectedDateKey);
   });

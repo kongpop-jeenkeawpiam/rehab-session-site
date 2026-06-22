@@ -75,7 +75,7 @@ Intro:
 Exercise summary cards:
 
 1. **Wall Sit (Shallow Angle)**
-   - Volume / Dosage: Hold 30 sec × 10 reps, Total: 2 Sets
+   - Volume / Dosage: Hold 20 sec × 5 reps, Total: 2 Sets
    - Recommended Timing: After returning to dorm / Before bed
    - Primary Focus: Maintain a 50:50 weight distribution between both legs.
 
@@ -233,7 +233,7 @@ Expected: Browser can load `http://localhost:8000/` without errors.
 - [ ] Add SLR card with dosage, timing, and focus.
 - [ ] Use semantic lists or definition lists for readability.
 - [ ] Verify all numbers match the source:
-  - [ ] Wall Sit: 30 sec × 10 reps, Total: 2 Sets
+  - [ ] Wall Sit: 20 sec × 5 reps, Total: 2 Sets
   - [ ] SLR: 5 sec × 15 reps, Total: 3 Sets
   - [ ] Toe angle: 15°
 
