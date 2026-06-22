@@ -1029,6 +1029,29 @@ dd {
   font-weight: 800;
 }
 
+.today-summary-card {
+  grid-column: 1 / -1;
+}
+
+.today-summary-text {
+  margin-bottom: 1rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.today-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.copy-summary-status {
+  min-height: 1.5rem;
+  margin-top: 0.65rem;
+  color: var(--muted);
+  font-weight: 750;
+}
+
 textarea {
   width: 100%;
   resize: vertical;

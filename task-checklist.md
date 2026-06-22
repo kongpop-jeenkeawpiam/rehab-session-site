@@ -30,7 +30,7 @@ This checklist is the short execution version of `implementation-plan.md`.
 
 ## Task 3: Add daily rehab plan content
 - [x] Add intro text: “Perform these exercises daily from today until your next physical therapy session.”
-- [x] Add Wall Sit dosage: Hold 30 sec × 10 reps, Total: 2 Sets
+- [x] Add Wall Sit dosage: Hold 20 sec × 5 reps, Total: 2 Sets
 - [x] Add Wall Sit timing: After returning to dorm / Before bed
 - [x] Add Wall Sit focus: 50:50 weight distribution between both legs
 - [x] Add SLR dosage: Hold 5 sec × 15 reps, Total: 3 Sets
