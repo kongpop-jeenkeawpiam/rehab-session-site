@@ -74,7 +74,7 @@ Source: `supabase-schema.sql`
 | `manual_completion` | `boolean` | Yes | Whether completion was manually toggled. |
 | `checklist` | `jsonb` | Yes | Snapshot of checklist item states. |
 | `set_rows` | `jsonb` | Yes | Snapshot of set timer rows. |
-| `timer` | `jsonb` | Yes | Snapshot of the session timer. |
+| `timer` | `jsonb` | Yes | Deprecated compatibility column; current clients ignore it. |
 | `notes` | `text` | Yes | Session notes. |
 | `exercises` | `jsonb` | Yes | Per-exercise progress summary. |
 | `monitoring` | `jsonb` | Yes | Post-rehab monitoring checks. |
@@ -103,7 +103,7 @@ rehab_sessions_user_date_idx on public.rehab_sessions (user_id, date_key)
 | `updated_at` | `timestamptz` | Yes | Current profile sync timestamp generated when the profile row is saved. |
 
 Profile rows are user-level state, not daily logs. Daily completion records,
-checklists, timers, set rows, notes, and per-date log history stay out of
+checklists, set rows, notes, and per-date log history stay out of
 `rehab_profiles` and continue to use local storage or `rehab_sessions`.
 
 ## Profile Row Shape
@@ -165,11 +165,6 @@ The assessment form and weekly schedule are re-rendered from the loaded profile.
       "restDurationSec": 15
     }
   },
-  "timer": {
-    "elapsedMs": 0,
-    "startedAt": null,
-    "isRunning": false
-  },
   "notes": "",
   "exercises": {
     "wall": {
@@ -201,7 +196,6 @@ client-side persistence contract.
 | `kneeRehabChecklistState` | JSON object | Checkbox ID to boolean state. |
 | `kneeRehabNotes` | string | Current session notes. |
 | `kneeRehabLastUpdated` | ISO datetime string | Last local update timestamp. |
-| `kneeRehabTimerState` | JSON object | Session timer snapshot. |
 | `kneeRehabSetRowState` | JSON object | Set row timer and completion snapshots. |
 | `kneeRehabCompletedDates` | JSON array | Completed date keys in `YYYY-MM-DD` form. |
 | `kneeRehabSessionHistory` | JSON object | Date-keyed session history records. |
@@ -256,7 +250,7 @@ must stay stable unless the script is updated at the same time.
 | Area | Required IDs |
 | --- | --- |
 | Supabase auth | `sync-auth-form`, `sync-email`, `sync-password`, `sync-sign-in`, `sync-sign-up`, `sync-sign-out`, `sync-status`, `sync-user` |
-| Session summary | `session-date`, `last-updated`, `session-timer`, `timer-toggle`, `timer-reset` |
+| Session summary | `session-date`, `last-updated` |
 | Voice cues | `voice-cues-toggle`, `voice-cues-status` |
 | Recovery setup | `assessment-form`, `assessment-status`, `pain-level`, `injury-history`, `commitment-days`, `support-available`, `assessment-save` |
 | Generated schedule | `weekly-schedule-panel`, `weekly-schedule-heading`, `weekly-schedule-list` |
@@ -284,5 +278,4 @@ Future dates can be selected for viewing, but editing controls are disabled.
 - Missing Supabase config disables sync and preserves local-only behavior.
 - Supabase load/save/auth failures are logged with `console.warn` and displayed
   through the sync status element.
-- Running timers are paused when session snapshots are written to history or
-  restored from saved records.
+- Restored exercise set timers remain paused until the user starts them.

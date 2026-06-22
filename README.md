@@ -76,6 +76,5 @@ For the full integration contract, see [`docs/api.md`](docs/api.md).
 
 - No custom backend is required.
 - Checklist progress, notes, and local session history are saved in the current browser using `localStorage`; with Supabase configured, authenticated progress also syncs to the cloud.
-- The tracker includes a persistent session timer with start, pause, resume, and reset controls stored locally in the browser.
-- Wall Sit and Straight Leg Raise include workout-style set rows with per-set timers saved locally in the browser.
+- Exercise set rows include per-set timers saved locally in the browser.
 - This tracker follows an existing rehab plan and does not replace medical advice.

@@ -39,7 +39,6 @@ const STORAGE_KEYS = {
   checklist: "kneeRehabChecklistState",
   notes: "kneeRehabNotes",
   lastUpdated: "kneeRehabLastUpdated",
-  timer: "kneeRehabTimerState",
   sets: "kneeRehabSetRowState",
   completedDates: "kneeRehabCompletedDates",
   sessionHistory: "kneeRehabSessionHistory",
@@ -129,13 +128,6 @@ const translations = {
     "session.loadingDate": "Loading date...",
     "session.lastUpdated": "Last updated",
     "session.notStartedYet": "Not started yet",
-    "timer.groupLabel": "Session timer",
-    "timer.label": "Session timer",
-    "timer.start": "Start",
-    "timer.pause": "Pause",
-    "timer.resume": "Resume",
-    "timer.reset": "Reset",
-    "timer.resetConfirm": "Reset the session timer? Your checklist and notes will stay saved.",
     "voice.groupLabel": "Voice cue settings",
     "voice.toggle": "Voice Cues",
     "voice.on": "Voice cues on",
@@ -335,8 +327,8 @@ const translations = {
     "notes.clearConfirm": "Clear session notes? Your checklist progress will stay saved.",
     "todaySummary.heading": "Session Summary",
     "todaySummary.pending": "Your summary will appear after you mark this session complete.",
-    "todaySummary.completed": "On {date}, you completed {exercises}. Session time: {duration}.",
-    "todaySummary.completedLegacy": "On {date}, you completed your session without detailed exercise data. Session time: {duration}.",
+    "todaySummary.completed": "On {date}, you completed {exercises}.",
+    "todaySummary.completedLegacy": "On {date}, you completed your session without detailed exercise data.",
     "todaySummary.exerciseSets": "{exercise} ({completed} of {total} sets)",
     "todaySummary.exerciseSetsWithReps": "{exercise} ({completed} of {total} sets, {completedReps} of {totalReps} reps)",
     "todaySummary.exerciseSetsWithRepsAndDuration": "{exercise} ({completed} of {total} sets, {completedReps} of {totalReps} reps, {seconds} seconds per rep)",
@@ -349,8 +341,8 @@ const translations = {
     "footer.resetAllSets": "Reset all sets",
     "footer.note": "This tracker is for following your given rehab plan. It does not replace medical advice.",
     "reset.checklistConfirm": "Reset all checklist items? Your notes will be kept.",
-    "reset.exerciseSetsConfirm": "Reset {exercise} set rows? Your checklist, notes, and session timer will stay saved.",
-    "reset.allSetsConfirm": "Reset all exercise set rows? Your checklist, notes, and session timer will stay saved.",
+    "reset.exerciseSetsConfirm": "Reset {exercise} set rows? Your checklist and notes will stay saved.",
+    "reset.allSetsConfirm": "Reset all exercise set rows? Your checklist and notes will stay saved.",
     "history.heading": "Session History",
     "history.selectDate": "Select a date to see saved progress.",
     "history.completedNoDetail": "Completed, no detailed session saved.",
@@ -399,13 +391,6 @@ const translations = {
     "session.loadingDate": "กำลังโหลดวันที่...",
     "session.lastUpdated": "อัปเดตล่าสุด",
     "session.notStartedYet": "ยังไม่ได้เริ่ม",
-    "timer.groupLabel": "ตัวจับเวลาเซสชัน",
-    "timer.label": "ตัวจับเวลาเซสชัน",
-    "timer.start": "เริ่ม",
-    "timer.pause": "พัก",
-    "timer.resume": "ทำต่อ",
-    "timer.reset": "รีเซ็ต",
-    "timer.resetConfirm": "รีเซ็ตตัวจับเวลาเซสชันหรือไม่? รายการตรวจสอบและบันทึกจะยังคงถูกบันทึกไว้",
     "voice.groupLabel": "การตั้งค่าเสียงเตือน",
     "voice.toggle": "เสียงเตือน",
     "voice.on": "เปิดเสียงเตือน",
@@ -605,8 +590,8 @@ const translations = {
     "notes.clearConfirm": "ล้างบันทึกเซสชันหรือไม่? ความคืบหน้ารายการตรวจสอบจะยังคงถูกบันทึกไว้",
     "todaySummary.heading": "สรุปเซสชัน",
     "todaySummary.pending": "สรุปจะแสดงหลังจากคุณทำเครื่องหมายว่าเซสชันนี้เสร็จแล้ว",
-    "todaySummary.completed": "วันที่ {date} คุณทำ {exercises} เวลารวมของเซสชัน: {duration}",
-    "todaySummary.completedLegacy": "วันที่ {date} คุณทำเซสชันเสร็จแล้วโดยไม่มีรายละเอียดการออกกำลังกาย เวลารวมของเซสชัน: {duration}",
+    "todaySummary.completed": "วันที่ {date} คุณทำ {exercises}",
+    "todaySummary.completedLegacy": "วันที่ {date} คุณทำเซสชันเสร็จแล้วโดยไม่มีรายละเอียดการออกกำลังกาย",
     "todaySummary.exerciseSets": "{exercise} ({completed} จาก {total} เซ็ต)",
     "todaySummary.exerciseSetsWithReps": "{exercise} ({completed} จาก {total} เซ็ต, {completedReps} จาก {totalReps} ครั้ง)",
     "todaySummary.exerciseSetsWithRepsAndDuration": "{exercise} ({completed} จาก {total} เซ็ต, {completedReps} จาก {totalReps} ครั้ง, ค้างครั้งละ {seconds} วินาที)",
@@ -619,8 +604,8 @@ const translations = {
     "footer.resetAllSets": "รีเซ็ตทุกเซ็ต",
     "footer.note": "ตัวติดตามนี้มีไว้สำหรับทำตามแผนฟื้นฟูที่ได้รับ ไม่สามารถใช้แทนคำแนะนำทางการแพทย์ได้",
     "reset.checklistConfirm": "รีเซ็ตรายการตรวจทั้งหมดหรือไม่? บันทึกของคุณจะยังคงอยู่",
-    "reset.exerciseSetsConfirm": "รีเซ็ตแถวเซ็ตของ {exercise} หรือไม่? รายการตรวจ บันทึก และตัวจับเวลาเซสชันจะยังคงถูกบันทึกไว้",
-    "reset.allSetsConfirm": "รีเซ็ตแถวเซ็ตการออกกำลังกายทั้งหมดหรือไม่? รายการตรวจ บันทึก และตัวจับเวลาเซสชันจะยังคงถูกบันทึกไว้",
+    "reset.exerciseSetsConfirm": "รีเซ็ตแถวเซ็ตของ {exercise} หรือไม่? รายการตรวจและบันทึกจะยังคงถูกบันทึกไว้",
+    "reset.allSetsConfirm": "รีเซ็ตแถวเซ็ตการออกกำลังกายทั้งหมดหรือไม่? รายการตรวจและบันทึกจะยังคงถูกบันทึกไว้",
     "history.heading": "ประวัติเซสชัน",
     "history.selectDate": "เลือกวันที่เพื่อดูความคืบหน้าที่บันทึกไว้",
     "history.completedNoDetail": "เสร็จแล้ว แต่ไม่มีรายละเอียดเซสชันที่บันทึกไว้",
@@ -676,9 +661,6 @@ const STATIC_TRANSLATION_SELECTORS = [
   { selector: ".session-panel", key: "session.summary", attr: "aria-label" },
   { selector: ".session-panel > div:nth-child(1) .meta-label", key: "session.today" },
   { selector: ".session-panel > div:nth-child(2) .meta-label", key: "session.lastUpdated" },
-  { selector: ".timer-panel", key: "timer.groupLabel", attr: "aria-label" },
-  { selector: ".timer-panel > .meta-label", key: "timer.label" },
-  { selector: "#timer-reset", key: "timer.reset" },
   { selector: ".voice-cue-panel", key: "voice.groupLabel", attr: "aria-label" },
   { selector: ".voice-cue-toggle span", key: "voice.toggle" },
   { selector: "#progress-heading", key: "progress.heading" },
@@ -1006,7 +988,6 @@ const refreshLocalizedDynamicText = () => {
   if (document.getElementById("session-date") && document.getElementById("last-updated")) {
     setupSessionMeta();
   }
-  renderTimer();
   renderVoiceCueControl();
   if (
     document.getElementById("completed-count") &&
@@ -1067,14 +1048,6 @@ const DEFAULT_COMPLETED_DATES = [
   "2026-05-22",
   "2026-05-23"
 ];
-
-let timerIntervalId = null;
-
-const timerState = {
-  elapsedMs: 0,
-  startedAt: null,
-  isRunning: false
-};
 
 const audioCueState = {
   isEnabled: true,
@@ -1229,11 +1202,6 @@ const formatTimer = (totalMs) => {
     .join(":");
 };
 
-const getCurrentElapsedMs = () => {
-  if (!timerState.isRunning || !timerState.startedAt) return normalizeElapsedMs(timerState.elapsedMs);
-  return normalizeElapsedMs(timerState.elapsedMs + (Date.now() - timerState.startedAt));
-};
-
 const getAllSetRows = () => exerciseSetTrackers.flatMap((tracker) => tracker.sets);
 
 const getSetRowState = (setId) => setRowState[setId];
@@ -1306,52 +1274,6 @@ const renderExerciseProgress = () => {
 const getTodayDateKey = () => formatDateKey(new Date());
 
 const getActiveDateKey = () => calendarState.selectedDateKey || getTodayDateKey();
-
-const getTimerSnapshot = (options = {}) => {
-  const startedAt = Number(timerState.startedAt);
-  const shouldPause = options.pause === true;
-
-  return {
-    elapsedMs: normalizeElapsedMs(shouldPause ? getCurrentElapsedMs() : timerState.elapsedMs),
-    startedAt: shouldPause ? null : Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null,
-    isRunning: shouldPause ? false : Boolean(timerState.isRunning)
-  };
-};
-
-const applyTimerSnapshot = (storedTimer = {}) => {
-  const startedAt = Number(storedTimer.startedAt);
-
-  timerState.elapsedMs = normalizeElapsedMs(storedTimer.elapsedMs);
-  timerState.startedAt = Number.isFinite(startedAt) && startedAt > 0 ? startedAt : null;
-  timerState.isRunning = storedTimer.isRunning === true && timerState.startedAt !== null;
-};
-
-const readStoredTimer = () => {
-  try {
-    const storedValue = localStorage.getItem(STORAGE_KEYS.timer);
-    if (storedValue === null) return {};
-
-    const storedTimer = JSON.parse(storedValue);
-    if (!storedTimer || typeof storedTimer !== "object" || Array.isArray(storedTimer)) {
-      localStorage.removeItem(STORAGE_KEYS.timer);
-      return {};
-    }
-    return storedTimer;
-  } catch (error) {
-    console.warn("Could not parse stored timer state. Resetting timer.", error);
-    localStorage.removeItem(STORAGE_KEYS.timer);
-    return {};
-  }
-};
-
-const saveTimer = () => {
-  localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot()));
-  saveActiveSessionHistory();
-};
-
-const restoreTimer = () => {
-  applyTimerSnapshot(readStoredTimer());
-};
 
 const readStoredSetRows = () => {
   try {
@@ -1440,91 +1362,6 @@ const saveSetRows = () => {
 
 const restoreSetRows = () => {
   applySetRowsSnapshot(readStoredSetRows());
-};
-
-const clearTimerInterval = () => {
-  if (timerIntervalId === null) return;
-  window.clearInterval(timerIntervalId);
-  timerIntervalId = null;
-};
-
-const renderTimer = () => {
-  const timerDisplay = document.getElementById("session-timer");
-  const timerToggle = document.getElementById("timer-toggle");
-  const currentElapsedMs = getCurrentElapsedMs();
-
-  if (timerDisplay) {
-    timerDisplay.textContent = formatTimer(currentElapsedMs);
-  }
-
-  if (timerToggle) {
-    timerToggle.textContent = timerState.isRunning
-      ? t("timer.pause")
-      : currentElapsedMs > 0
-        ? t("timer.resume")
-        : t("timer.start");
-  }
-};
-
-const startTimer = () => {
-  if (timerState.isRunning) return;
-
-  timerState.elapsedMs = normalizeElapsedMs(timerState.elapsedMs);
-  timerState.startedAt = Date.now();
-  timerState.isRunning = true;
-  clearTimerInterval();
-  saveTimer();
-  renderTimer();
-  timerIntervalId = window.setInterval(renderTimer, 1000);
-  saveLastUpdated();
-};
-
-const pauseTimer = () => {
-  if (!timerState.isRunning) return;
-
-  timerState.elapsedMs = getCurrentElapsedMs();
-  timerState.startedAt = null;
-  timerState.isRunning = false;
-  clearTimerInterval();
-  saveTimer();
-  renderTimer();
-  saveLastUpdated();
-};
-
-const toggleTimer = () => {
-  if (timerState.isRunning) {
-    pauseTimer();
-    return;
-  }
-
-  startTimer();
-};
-
-const resetTimer = () => {
-  const shouldReset = window.confirm(t("timer.resetConfirm"));
-  if (!shouldReset) return;
-
-  clearTimerInterval();
-  timerState.elapsedMs = 0;
-  timerState.startedAt = null;
-  timerState.isRunning = false;
-  localStorage.removeItem(STORAGE_KEYS.timer);
-  renderTimer();
-  saveActiveSessionHistory();
-  saveLastUpdated();
-};
-
-const setupTimer = () => {
-  restoreTimer();
-  renderTimer();
-  clearTimerInterval();
-
-  if (timerState.isRunning) {
-    timerIntervalId = window.setInterval(renderTimer, 1000);
-  }
-
-  document.getElementById("timer-toggle")?.addEventListener("click", toggleTimer);
-  document.getElementById("timer-reset")?.addEventListener("click", resetTimer);
 };
 
 const saveLastUpdated = () => {
@@ -1677,7 +1514,6 @@ const getStoredNotes = () => localStorage.getItem(STORAGE_KEYS.notes) || "";
 const writeActiveSnapshotsToLocalStorage = () => {
   localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(getChecklistSnapshot()));
   localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(getSetRowsSnapshot()));
-  localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot({ pause: true })));
   localStorage.setItem(STORAGE_KEYS.notes, getCurrentNotes());
 };
 
@@ -1693,7 +1529,6 @@ const createCurrentSessionHistoryRecord = (dateKey, options = {}) => {
     updatedAt: new Date().toISOString(),
     checklist: getChecklistSnapshot(),
     setRows: getSetRowsSnapshot(),
-    timer: getTimerSnapshot({ pause: true }),
     exercises: getExerciseHistorySnapshot(),
     monitoring: getMonitoringHistorySnapshot(),
     notes: getCurrentNotes()
@@ -1710,7 +1545,6 @@ const createMinimalSessionHistoryRecord = (dateKey, completed) => {
     updatedAt: new Date().toISOString(),
     checklist: existingRecord.checklist || {},
     setRows: existingRecord.setRows || {},
-    timer: existingRecord.timer || {},
     exercises: existingRecord.exercises || {},
     monitoring: existingRecord.monitoring || {},
     notes: existingRecord.notes || ""
@@ -1726,7 +1560,6 @@ const createLegacyTodayRecord = () => {
     updatedAt: localStorage.getItem(STORAGE_KEYS.lastUpdated) || new Date().toISOString(),
     checklist: readStoredChecklist(),
     setRows: readStoredSetRows(),
-    timer: readStoredTimer(),
     exercises: {},
     monitoring: {},
     notes: getStoredNotes()
@@ -1840,7 +1673,6 @@ const createSupabaseRow = (dateKey) => {
     manual_completion: Boolean(record.manualCompletion),
     checklist: isActiveDate ? getChecklistSnapshot() : record.checklist || {},
     set_rows: isActiveDate ? getSetRowsSnapshot() : record.setRows || {},
-    timer: isActiveDate ? getTimerSnapshot({ pause: true }) : record.timer || {},
     notes: record.notes || "",
     exercises: record.exercises || {},
     monitoring: record.monitoring || {},
@@ -1944,7 +1776,6 @@ const createHistoryRecordFromSupabaseRow = (row) => {
     updatedAt: row.updated_at || new Date().toISOString(),
     checklist: row.checklist && typeof row.checklist === "object" ? row.checklist : {},
     setRows: row.set_rows && typeof row.set_rows === "object" ? row.set_rows : {},
-    timer: row.timer && typeof row.timer === "object" ? row.timer : {},
     exercises: row.exercises && typeof row.exercises === "object" ? row.exercises : {},
     monitoring: row.monitoring && typeof row.monitoring === "object" ? row.monitoring : {},
     notes: typeof row.notes === "string" ? row.notes : ""
@@ -1962,13 +1793,6 @@ const applySessionRecordToCurrentView = (record) => {
   if (record.setRows && typeof record.setRows === "object") {
     applySetRowsSnapshot(record.setRows);
     localStorage.setItem(STORAGE_KEYS.sets, JSON.stringify(getSetRowsSnapshot()));
-  }
-
-  if (record.timer && typeof record.timer === "object") {
-    clearTimerInterval();
-    applyTimerSnapshot({ ...record.timer, isRunning: false, startedAt: null });
-    localStorage.setItem(STORAGE_KEYS.timer, JSON.stringify(getTimerSnapshot()));
-    renderTimer();
   }
 
   const notes = document.getElementById("session-notes");
@@ -2219,17 +2043,15 @@ const joinTodaySummaryParts = (parts) => {
 
 const createTodaySummaryText = (record, dateKey = getTodayDateKey()) => {
   const date = formatDisplayDate(dateKey);
-  const duration = formatTimer(record?.timer?.elapsedMs || 0);
   const exerciseParts = getTodaySummaryExerciseParts(record);
 
   if (exerciseParts.length === 0) {
-    return t("todaySummary.completedLegacy", { date: date, duration: duration });
+    return t("todaySummary.completedLegacy", { date: date });
   }
 
   return t("todaySummary.completed", {
     date: date,
-    exercises: joinTodaySummaryParts(exerciseParts),
-    duration: duration
+    exercises: joinTodaySummaryParts(exerciseParts)
   });
 };
 
@@ -2383,8 +2205,6 @@ const setSessionEditingDisabled = (isDisabled) => {
     "#reset-all-sets",
     "#reset-checklist",
     "#clear-notes",
-    "#timer-toggle",
-    "#timer-reset",
     "#session-notes",
     "#daily-log-form input",
     "#daily-log-form select",
@@ -2402,20 +2222,16 @@ const applySelectedDateSession = () => {
   setupSessionMeta();
 
   if (isFutureDate) {
-    clearTimerInterval();
     clearSetRowInterval();
     applySessionRecordToCurrentView(createMinimalSessionHistoryRecord(dateKey, false));
-    renderTimer();
     renderSetRows();
     updateProgress();
     restoreDailyLog();
     return;
   }
 
-  clearTimerInterval();
   clearSetRowInterval();
   applySessionRecordToCurrentView(getSessionRecordForDate(dateKey));
-  renderTimer();
   renderSetRows();
   ensureSetRowInterval();
   updateProgress();
@@ -3448,7 +3264,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupDailyLog();
   setupNotes();
   setupReset();
-  setupTimer();
   setupSetRows();
   applySelectedDateSession();
   setupSupabaseSync();

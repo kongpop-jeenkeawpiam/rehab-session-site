@@ -130,7 +130,6 @@ const summaryRecord = {
     "wall-1": { isDone: true, totalReps: 5, workDurationSec: 20 },
     "wall-2": { isDone: false, totalReps: 5, workDurationSec: 20 }
   },
-  timer: { elapsedMs: 754000 },
   checklist: { sentinel: "CHECKLIST MUST NOT APPEAR" },
   notes: "NOTES MUST NOT APPEAR"
 };
@@ -144,9 +143,9 @@ assert.equal(
 );
 const summary = createTodaySummaryText(summaryRecord, "2026-06-22");
 assert.ok(summary.includes("Straight Leg Raise (2 of 3 sets, 30 of 45 reps) and Wall Sit (1 of 2 sets, 5 of 10 reps, 20 seconds per rep)"));
-assert.match(summary, /Session time: 12:34/);
+assert.doesNotMatch(summary, /Session time|12:34/);
 assert.doesNotMatch(summary, /CHECKLIST MUST NOT APPEAR|NOTES MUST NOT APPEAR/);
-const legacySummary = createTodaySummaryText({ completed: true, exercises: {}, timer: {} }, "2026-06-22");
+const legacySummary = createTodaySummaryText({ completed: true, exercises: {} }, "2026-06-22");
 assert.match(legacySummary, /without detailed exercise data/);
 
 const selectedKey = "2026-06-21";
@@ -159,7 +158,7 @@ calendarState.sessionHistory[selectedKey] = summaryRecord;
 calendarState.completedDates.add(selectedKey);
 renderSelectedSessionSummary();
 assert.match(summaryDate.textContent, /June 21, 2026/);
-assert.match(summaryText.textContent, /Session time: 12:34/);
+assert.doesNotMatch(summaryText.textContent, /Session time|12:34/);
 
 calendarState.completedDates.clear();
 renderSelectedSessionCompletionButton();
