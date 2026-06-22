@@ -150,6 +150,15 @@ const translations = {
     "status.inProgress": "In progress",
     "status.notStarted": "Not started",
     "status.noDetail": "No detail",
+    "mobile.heading": "Knee Rehab",
+    "mobile.more": "More",
+    "mobile.less": "Less",
+    "mobile.previous": "Previous",
+    "mobile.next": "Next",
+    "mobile.exercisePosition": "Exercise {current} of {total}",
+    "mobile.monitoring": "Final safety check",
+    "mobile.complete": "Session complete",
+    "mobile.progress": "{completed} / {total} completed",
     "calendar.meta": "Completion calendar",
     "calendar.heading": "Monthly Progress",
     "calendar.navLabel": "Calendar month navigation",
@@ -413,6 +422,15 @@ const translations = {
     "status.inProgress": "กำลังทำ",
     "status.notStarted": "ยังไม่ได้เริ่ม",
     "status.noDetail": "ไม่มีรายละเอียด",
+    "mobile.heading": "กายภาพเข่า",
+    "mobile.more": "เพิ่มเติม",
+    "mobile.less": "ย่อ",
+    "mobile.previous": "ก่อนหน้า",
+    "mobile.next": "ถัดไป",
+    "mobile.exercisePosition": "ท่าที่ {current} จาก {total}",
+    "mobile.monitoring": "ตรวจความปลอดภัยขั้นสุดท้าย",
+    "mobile.complete": "เสร็จสิ้นเซสชัน",
+    "mobile.progress": "เสร็จแล้ว {completed} / {total}",
     "calendar.meta": "ปฏิทินการทำครบ",
     "calendar.heading": "ความคืบหน้ารายเดือน",
     "calendar.navLabel": "นำทางเดือนในปฏิทิน",
@@ -1089,6 +1107,188 @@ const exerciseProgressGroups = REHAB_EXERCISES.map((exercise) => ({
   setIds: exercise.setIds,
   checkIds: exercise.checkIds
 }));
+
+const MOBILE_SESSION_QUERY = "(max-width: 699px)";
+const MOBILE_SESSION_STEPS = [
+  ...REHAB_EXERCISES.map((exercise) => ({
+    id: exercise.id,
+    cardId: `${exercise.id}-card`,
+    setIds: exercise.setIds,
+    checkIds: exercise.checkIds
+  })),
+  {
+    id: "monitoring",
+    cardId: "monitoring-card",
+    setIds: [],
+    checkIds: ["monitor-immediate", "monitor-next-morning", "monitor-walking"]
+  }
+];
+
+const mobileSessionState = {
+  currentIndex: 0,
+  isInitialized: false,
+  mediaQuery: null
+};
+
+const findFirstIncompleteMobileStep = (completionStates) => {
+  const index = completionStates.findIndex((isComplete) => !isComplete);
+  return index === -1 ? completionStates.length : index;
+};
+
+const findNextIncompleteMobileStep = (completionStates, currentIndex) => {
+  for (let index = currentIndex + 1; index < completionStates.length; index++) {
+    if (!completionStates[index]) return index;
+  }
+  return completionStates.length;
+};
+
+const isMobileSessionStepComplete = (step) => {
+  const setsComplete = step.setIds.every((setId) => getSetRowState(setId)?.isDone === true);
+  const checksComplete = step.checkIds.every((checkId) => document.getElementById(checkId)?.checked === true);
+  return setsComplete && checksComplete;
+};
+
+const getMobileSessionCompletionStates = () => MOBILE_SESSION_STEPS.map(isMobileSessionStepComplete);
+
+const getMobileSessionStepLabel = (step, index) => {
+  if (step.id === "monitoring") return t("mobile.monitoring");
+  return `${index + 1}. ${getExerciseLabel(step.id)}`;
+};
+
+const getMobileSessionPositionLabel = (index) => {
+  if (index >= MOBILE_SESSION_STEPS.length) return t("mobile.complete");
+  if (MOBILE_SESSION_STEPS[index].id === "monitoring") return t("mobile.monitoring");
+  return t("mobile.exercisePosition", { current: index + 1, total: REHAB_EXERCISES.length });
+};
+
+const renderMobileSessionStepList = (completionStates) => {
+  const list = document.getElementById("mobile-session-step-list");
+  if (!list) return;
+
+  if (list.children.length !== MOBILE_SESSION_STEPS.length) {
+    list.textContent = "";
+    MOBILE_SESSION_STEPS.forEach((step, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "mobile-step-button";
+      button.addEventListener("click", () => setMobileSessionStep(index, true));
+      list.appendChild(button);
+    });
+  }
+
+  MOBILE_SESSION_STEPS.forEach((step, index) => {
+    const button = list.children[index];
+    button.className = "mobile-step-button";
+    button.textContent = getMobileSessionStepLabel(step, index);
+    button.classList.toggle("completed", completionStates[index]);
+    if (index === mobileSessionState.currentIndex) {
+      button.setAttribute("aria-current", "step");
+    } else {
+      button.removeAttribute("aria-current");
+    }
+  });
+};
+
+const renderMobileSessionMode = () => {
+  if (!mobileSessionState.isInitialized) return;
+
+  const completionStates = getMobileSessionCompletionStates();
+  const allComplete = completionStates.every(Boolean);
+  const currentIndex = mobileSessionState.currentIndex;
+  const isCompletionView = currentIndex >= MOBILE_SESSION_STEPS.length;
+  const nextIndex = findNextIncompleteMobileStep(completionStates, currentIndex);
+  const checklistStats = getChecklistStats();
+  const positionLabel = getMobileSessionPositionLabel(currentIndex);
+
+  document.body.classList.toggle("mobile-session-complete", allComplete);
+  MOBILE_SESSION_STEPS.forEach((step, index) => {
+    document.getElementById(step.cardId)?.classList.toggle("mobile-inactive-step", index !== currentIndex);
+  });
+
+  const heading = document.getElementById("mobile-session-heading");
+  const date = document.getElementById("mobile-session-date");
+  const current = document.getElementById("mobile-session-current");
+  const progress = document.getElementById("mobile-session-progress");
+  const position = document.getElementById("mobile-session-position");
+  const previous = document.getElementById("mobile-session-previous");
+  const next = document.getElementById("mobile-session-next");
+  const more = document.getElementById("mobile-session-more");
+
+  if (heading) heading.textContent = t("mobile.heading");
+  if (date) date.textContent = document.getElementById("session-date")?.textContent || "";
+  if (current) current.textContent = positionLabel;
+  if (position) position.textContent = positionLabel;
+  if (progress) {
+    progress.textContent = t("mobile.progress", {
+      completed: checklistStats.completed,
+      total: checklistStats.total
+    });
+  }
+  if (previous) {
+    previous.textContent = t("mobile.previous");
+    previous.disabled = currentIndex === 0;
+  }
+  if (next) {
+    next.textContent = t("mobile.next");
+    next.disabled = isCompletionView || (!allComplete && nextIndex >= MOBILE_SESSION_STEPS.length);
+  }
+  if (more) {
+    const isOpen = document.body.classList.contains("mobile-more-open");
+    more.textContent = t(isOpen ? "mobile.less" : "mobile.more");
+    more.setAttribute("aria-expanded", String(isOpen));
+  }
+
+  renderMobileSessionStepList(completionStates);
+};
+
+const setMobileSessionStep = (index, shouldScroll = false) => {
+  mobileSessionState.currentIndex = Math.max(0, Math.min(index, MOBILE_SESSION_STEPS.length));
+  renderMobileSessionMode();
+
+  if (shouldScroll && mobileSessionState.mediaQuery?.matches) {
+    document.getElementById("mobile-session-overview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+};
+
+const applyMobileSessionViewport = () => {
+  const isMobile = mobileSessionState.mediaQuery?.matches === true;
+  document.body.classList.toggle("mobile-session-ready", isMobile);
+  if (!isMobile) document.body.classList.remove("mobile-more-open");
+  renderMobileSessionMode();
+};
+
+const setupMobileSessionMode = () => {
+  if (typeof window.matchMedia !== "function") return;
+
+  mobileSessionState.mediaQuery = window.matchMedia(MOBILE_SESSION_QUERY);
+  mobileSessionState.currentIndex = findFirstIncompleteMobileStep(getMobileSessionCompletionStates());
+  mobileSessionState.isInitialized = true;
+
+  document.getElementById("mobile-session-previous")?.addEventListener("click", () => {
+    setMobileSessionStep(mobileSessionState.currentIndex - 1, true);
+  });
+  document.getElementById("mobile-session-next")?.addEventListener("click", () => {
+    const completionStates = getMobileSessionCompletionStates();
+    const nextIndex = findNextIncompleteMobileStep(completionStates, mobileSessionState.currentIndex);
+    if (completionStates.every(Boolean)) {
+      setMobileSessionStep(MOBILE_SESSION_STEPS.length, true);
+    } else if (nextIndex < MOBILE_SESSION_STEPS.length) {
+      setMobileSessionStep(nextIndex, true);
+    }
+  });
+  document.getElementById("mobile-session-more")?.addEventListener("click", () => {
+    document.body.classList.toggle("mobile-more-open");
+    renderMobileSessionMode();
+  });
+
+  if (typeof mobileSessionState.mediaQuery.addEventListener === "function") {
+    mobileSessionState.mediaQuery.addEventListener("change", applyMobileSessionViewport);
+  } else {
+    mobileSessionState.mediaQuery.addListener(applyMobileSessionViewport);
+  }
+
+  applyMobileSessionViewport();
+};
 
 let setRowIntervalId = null;
 
@@ -2585,6 +2785,7 @@ const updateProgress = () => {
   renderExerciseProgress();
   renderTodayCompletionButton();
   renderSessionHistory();
+  renderMobileSessionMode();
 };
 
 const restoreChecklist = () => {
@@ -2883,6 +3084,7 @@ const renderSetRows = () => {
   renderExerciseProgress();
   renderTodayCompletionButton();
   renderSessionHistory();
+  renderMobileSessionMode();
 };
 
 const ensureSetRowInterval = () => {
@@ -3266,5 +3468,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupReset();
   setupSetRows();
   applySelectedDateSession();
+  setupMobileSessionMode();
   setupSupabaseSync();
 });

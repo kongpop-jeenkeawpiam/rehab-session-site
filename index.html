@@ -10,6 +10,24 @@
 </head>
 <body>
   <div class="page-shell">
+    <section id="mobile-session-overview" class="mobile-session-overview" aria-labelledby="mobile-session-heading">
+      <div class="mobile-session-overview-header">
+        <div>
+          <span class="meta-label">Today’s session</span>
+          <h1 id="mobile-session-heading">Knee Rehab</h1>
+          <p id="mobile-session-date">Loading date…</p>
+        </div>
+        <button type="button" id="mobile-session-more" class="mobile-more-button" aria-expanded="false">
+          More
+        </button>
+      </div>
+      <div class="mobile-session-progress" aria-live="polite">
+        <strong id="mobile-session-current">Exercise 1 of 8</strong>
+        <span id="mobile-session-progress">0 / 34 completed</span>
+      </div>
+      <div id="mobile-session-step-list" class="mobile-session-step-list" aria-label="Session steps"></div>
+    </section>
+
     <header class="hero">
       <p class="eyebrow">Home Rehabilitation</p>
       <h1 data-i18n="site.title">Knee Rehab Session Tracker</h1>
@@ -207,7 +225,7 @@
     </header>
 
     <main>
-      <section class="card plan-card" aria-labelledby="daily-plan-heading">
+      <section class="card plan-card mobile-secondary" aria-labelledby="daily-plan-heading">
         <div class="section-heading">
           <span class="section-icon" aria-hidden="true">P</span>
           <div>
@@ -238,7 +256,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-green" aria-labelledby="quad-set-heading">
+      <section id="quad-set-card" class="card checklist-card accent-green" data-mobile-step="quad-set" aria-labelledby="quad-set-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">Q</span>
           <div>
@@ -307,7 +325,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-blue" aria-labelledby="slr-heading">
+      <section id="slr-card" class="card checklist-card accent-blue" data-mobile-step="slr" aria-labelledby="slr-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🔵</span>
           <div>
@@ -388,7 +406,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-green" aria-labelledby="bridge-heading">
+      <section id="bridge-card" class="card checklist-card accent-green" data-mobile-step="bridge" aria-labelledby="bridge-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🟢</span>
           <div>
@@ -461,7 +479,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-blue" aria-labelledby="clam-heading">
+      <section id="clam-card" class="card checklist-card accent-blue" data-mobile-step="clam" aria-labelledby="clam-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🔵</span>
           <div>
@@ -534,7 +552,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-blue" aria-labelledby="side-leg-lift-heading">
+      <section id="side-leg-lift-card" class="card checklist-card accent-blue" data-mobile-step="side-leg-lift" aria-labelledby="side-leg-lift-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">S</span>
           <div>
@@ -603,7 +621,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-green" aria-labelledby="wall-sit-heading">
+      <section id="wall-card" class="card checklist-card accent-green" data-mobile-step="wall" aria-labelledby="wall-sit-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🟢</span>
           <div>
@@ -670,7 +688,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-green" aria-labelledby="chair-squat-heading">
+      <section id="chair-squat-card" class="card checklist-card accent-green" data-mobile-step="chair-squat" aria-labelledby="chair-squat-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">C</span>
           <div>
@@ -717,7 +735,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-blue" aria-labelledby="mini-single-leg-squat-heading">
+      <section id="mini-single-leg-squat-card" class="card checklist-card accent-blue" data-mobile-step="mini-single-leg-squat" aria-labelledby="mini-single-leg-squat-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">M</span>
           <div>
@@ -775,7 +793,7 @@
         </div>
       </section>
 
-      <section class="card checklist-card accent-warning" aria-labelledby="monitoring-heading">
+      <section id="monitoring-card" class="card checklist-card accent-warning" data-mobile-step="monitoring" aria-labelledby="monitoring-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🔴</span>
           <div>
@@ -805,7 +823,7 @@
         </div>
       </section>
 
-      <section class="card daily-log-card" aria-labelledby="daily-log-heading">
+      <section class="card daily-log-card mobile-secondary" aria-labelledby="daily-log-heading">
         <div class="section-heading">
           <span class="section-icon" aria-hidden="true">L</span>
           <div>
@@ -844,7 +862,7 @@
         </form>
       </section>
 
-      <section class="card notes-card" aria-labelledby="notes-heading">
+      <section class="card notes-card mobile-secondary" aria-labelledby="notes-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">📝</span>
           <div>
@@ -856,7 +874,7 @@
         <textarea id="session-notes" rows="5" data-i18n-placeholder="notes.placeholder" placeholder="Example: Mild thigh burn only, no joint pain. Knee felt normal next morning."></textarea>
       </section>
 
-      <section class="card today-summary-card" aria-labelledby="todays-summary-heading">
+      <section class="card today-summary-card mobile-secondary mobile-completion-summary" aria-labelledby="todays-summary-heading">
         <div class="section-heading compact">
           <div>
             <h2 id="todays-summary-heading">Session Summary</h2>
@@ -871,6 +889,12 @@
         <p id="copy-session-summary-status" class="copy-summary-status" role="status" aria-live="polite"></p>
       </section>
     </main>
+
+    <nav id="mobile-session-navigation" class="mobile-session-navigation" aria-label="Exercise navigation">
+      <button type="button" id="mobile-session-previous" class="mobile-navigation-button">Previous</button>
+      <span id="mobile-session-position" aria-live="polite">Exercise 1 of 8</span>
+      <button type="button" id="mobile-session-next" class="mobile-navigation-button primary">Next</button>
+    </nav>
 
     <footer class="footer-actions">
       <button type="button" id="reset-checklist" class="button danger-button">Reset Checklist</button>
