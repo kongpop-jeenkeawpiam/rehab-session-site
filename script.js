@@ -1078,7 +1078,7 @@ const SET_ROW_CONFIG = {
   bridge: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
   clam: { totalReps: 15, workDurationSec: 5, restDurationSec: 3, workCue: "Open", restCue: "Relax", activeTargetPrefix: "Rep" },
   "side-leg-lift": { totalReps: 15, workDurationSec: 3, restDurationSec: 3, workCue: "Lift", restCue: "Relax", activeTargetPrefix: "Rep" },
-  wall: { totalReps: 5, workDurationSec: 20, restDurationSec: 60, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Rep" },
+  wall: { totalReps: 5, workDurationSec: 20, restDurationSec: 30, workCue: "Hold", restCue: "Resting", activeTargetPrefix: "Rep" },
   "chair-squat": { totalReps: 10, workDurationSec: 3, restDurationSec: 3, workCue: "Lower", restCue: "Stand", activeTargetPrefix: "Rep" },
   "mini-single-leg-squat": { totalReps: 10, workDurationSec: 3, restDurationSec: 3, workCue: "Lower", restCue: "Stand", activeTargetPrefix: "Rep" }
 };
