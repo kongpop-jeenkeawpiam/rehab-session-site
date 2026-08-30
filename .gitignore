@@ -3,3 +3,5 @@ docs/superpowers/plans/2026-06-05-add-glute-bridges-clamshells.md
 /docs/*
 !/docs/api.md
 /.claude/
+/.agents/
+/.gemini/
