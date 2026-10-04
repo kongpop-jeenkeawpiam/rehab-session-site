@@ -170,7 +170,9 @@ renderSelectedSessionCompletionButton();
 assert.equal(summaryCompleteButton.textContent, "Completed");
 assert.equal(summaryCompleteButton.disabled, true);
 
-calendarState.selectedDateKey = "2026-06-23";
+const futureDate = new Date();
+futureDate.setDate(futureDate.getDate() + 1);
+calendarState.selectedDateKey = formatDateKey(futureDate);
 renderSelectedSessionCompletionButton();
 assert.equal(summaryCompleteButton.disabled, true);
 

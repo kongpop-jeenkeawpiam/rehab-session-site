@@ -63,6 +63,10 @@ const SUPABASE_PLACEHOLDER_VALUES = new Set([
 
 const SUPPORTED_LANGUAGES = ["en", "th"];
 const DEFAULT_LANGUAGE = "en";
+const phaseTwoProgram = window.KNEE_REHAB_PHASE_TWO || { exercises: [], configs: {}, translations: {} };
+checklistItems.push(...phaseTwoProgram.exercises.flatMap(exercise => exercise.checkIds));
+let activeProgram = "original";
+const isActiveExercise = exercise => (exercise.program || "original") === activeProgram;
 
 const REHAB_PHASES = [
   {
@@ -96,7 +100,8 @@ const REHAB_EXERCISES = [
   { id: "side-leg-lift", phaseId: "phase-1-foundation", setIds: ["side-leg-lift-1", "side-leg-lift-2", "side-leg-lift-3"], target: "3 sets", checkIds: ["side-leg-lift-setup", "side-leg-lift-control", "side-leg-lift-safety"] },
   { id: "wall", phaseId: "phase-2-static-load", setIds: ["wall-1", "wall-2"], target: "2 sets, 5 reps, 20 seconds", checkIds: ["wall-setup", "wall-angle", "wall-foot-position", "wall-data-check", "wall-safety-check"] },
   { id: "chair-squat", phaseId: "phase-3-dynamic-control", setIds: ["chair-squat-1"], target: "1 set, 10 reps", checkIds: ["chair-squat-support", "chair-squat-hip-hinge", "chair-squat-safety"] },
-  { id: "mini-single-leg-squat", phaseId: "phase-3-dynamic-control", setIds: ["mini-single-leg-squat-1", "mini-single-leg-squat-2"], target: "1-2 sets, 5-10 reps", checkIds: ["mini-single-leg-squat-support", "mini-single-leg-squat-depth", "mini-single-leg-squat-safety"] }
+  { id: "mini-single-leg-squat", phaseId: "phase-3-dynamic-control", setIds: ["mini-single-leg-squat-1", "mini-single-leg-squat-2"], target: "1-2 sets, 5-10 reps", checkIds: ["mini-single-leg-squat-support", "mini-single-leg-squat-depth", "mini-single-leg-squat-safety"] },
+  ...phaseTwoProgram.exercises
 ];
 
 const PROGRESSION_RULES = {
@@ -349,9 +354,9 @@ const translations = {
     "footer.resetChecklist": "Reset Checklist",
     "footer.resetAllSets": "Reset all sets",
     "footer.note": "This tracker is for following your given rehab plan. It does not replace medical advice.",
-    "reset.checklistConfirm": "Reset all checklist items? Your notes will be kept.",
+    "reset.checklistConfirm": "Reset checklist items in the selected program and monitoring checks? Your notes will be kept.",
     "reset.exerciseSetsConfirm": "Reset {exercise} set rows? Your checklist and notes will stay saved.",
-    "reset.allSetsConfirm": "Reset all exercise set rows? Your checklist and notes will stay saved.",
+    "reset.allSetsConfirm": "Reset all sets in the selected program? Your checklist and notes will stay saved.",
     "history.heading": "Session History",
     "history.selectDate": "Select a date to see saved progress.",
     "history.completedNoDetail": "Completed, no detailed session saved.",
@@ -621,9 +626,9 @@ const translations = {
     "footer.resetChecklist": "รีเซ็ตรายการตรวจ",
     "footer.resetAllSets": "รีเซ็ตทุกเซ็ต",
     "footer.note": "ตัวติดตามนี้มีไว้สำหรับทำตามแผนฟื้นฟูที่ได้รับ ไม่สามารถใช้แทนคำแนะนำทางการแพทย์ได้",
-    "reset.checklistConfirm": "รีเซ็ตรายการตรวจทั้งหมดหรือไม่? บันทึกของคุณจะยังคงอยู่",
+    "reset.checklistConfirm": "รีเซ็ตรายการตรวจของโปรแกรมที่เลือกและการตรวจหลังฝึกหรือไม่? บันทึกของคุณจะยังคงอยู่",
     "reset.exerciseSetsConfirm": "รีเซ็ตแถวเซ็ตของ {exercise} หรือไม่? รายการตรวจและบันทึกจะยังคงถูกบันทึกไว้",
-    "reset.allSetsConfirm": "รีเซ็ตแถวเซ็ตการออกกำลังกายทั้งหมดหรือไม่? รายการตรวจและบันทึกจะยังคงถูกบันทึกไว้",
+    "reset.allSetsConfirm": "รีเซ็ตทุกเซตของโปรแกรมที่เลือกหรือไม่? รายการตรวจและบันทึกจะยังคงอยู่",
     "history.heading": "ประวัติเซสชัน",
     "history.selectDate": "เลือกวันที่เพื่อดูความคืบหน้าที่บันทึกไว้",
     "history.completedNoDetail": "เสร็จแล้ว แต่ไม่มีรายละเอียดเซสชันที่บันทึกไว้",
@@ -662,6 +667,10 @@ const translations = {
     "sync.credentialsRequired": "กรอกอีเมลและรหัสผ่าน"
   }
 };
+
+Object.entries(phaseTwoProgram.translations).forEach(([language, values]) => {
+  Object.assign(translations[language], values);
+});
 
 const STATIC_TRANSLATION_SELECTORS = [
   { selector: 'meta[name="description"]', key: "meta.description", attr: "content" },
@@ -1084,6 +1093,7 @@ const SET_ROW_CONFIG = {
 };
 
 const SET_ID_NUMBER_SUFFIX_PATTERN = /-\d+$/;
+Object.assign(SET_ROW_CONFIG, phaseTwoProgram.configs);
 
 const getExerciseIdFromSetId = (setId) => REHAB_EXERCISES
   .find((exercise) => exercise.setIds.includes(setId))
@@ -1103,13 +1113,14 @@ const exerciseSetTrackers = REHAB_EXERCISES.map((exercise) => ({
 
 const exerciseProgressGroups = REHAB_EXERCISES.map((exercise) => ({
   id: exercise.id,
+  program: exercise.program,
   label: exercise.id,
   setIds: exercise.setIds,
   checkIds: exercise.checkIds
 }));
 
 const MOBILE_SESSION_QUERY = "(max-width: 699px)";
-const MOBILE_SESSION_STEPS = [
+let MOBILE_SESSION_STEPS = [
   ...REHAB_EXERCISES.map((exercise) => ({
     id: exercise.id,
     cardId: `${exercise.id}-card`,
@@ -1129,6 +1140,9 @@ const mobileSessionState = {
   isInitialized: false,
   mediaQuery: null
 };
+
+const ALL_MOBILE_SESSION_STEPS = [...MOBILE_SESSION_STEPS];
+MOBILE_SESSION_STEPS = ALL_MOBILE_SESSION_STEPS.filter(step => step.id === "monitoring" || REHAB_EXERCISES.some(exercise => exercise.id === step.id && isActiveExercise(exercise)));
 
 const findFirstIncompleteMobileStep = (completionStates) => {
   const index = completionStates.findIndex((isComplete) => !isComplete);
@@ -1158,7 +1172,7 @@ const getMobileSessionStepLabel = (step, index) => {
 const getMobileSessionPositionLabel = (index) => {
   if (index >= MOBILE_SESSION_STEPS.length) return t("mobile.complete");
   if (MOBILE_SESSION_STEPS[index].id === "monitoring") return t("mobile.monitoring");
-  return t("mobile.exercisePosition", { current: index + 1, total: REHAB_EXERCISES.length });
+  return t("mobile.exercisePosition", { current: index + 1, total: REHAB_EXERCISES.filter(isActiveExercise).length });
 };
 
 const renderMobileSessionStepList = (completionStates) => {
@@ -1444,7 +1458,7 @@ const getExerciseProgressStats = (group) => {
   };
 };
 
-const hasFinishedExercise = () => exerciseProgressGroups
+const hasFinishedExercise = () => exerciseProgressGroups.filter(isActiveExercise)
   .some((group) => getExerciseProgressStats(group).isFinished);
 
 const hasCompletedImmediateSafetyCheck = () => document.getElementById("monitor-immediate")?.checked === true;
@@ -1455,6 +1469,7 @@ const renderExerciseProgress = () => {
   exerciseProgressGroups.forEach((group) => {
     const stats = getExerciseProgressStats(group);
     const row = document.querySelector(`[data-exercise-progress="${group.id}"]`);
+    if (row) row.hidden = !isActiveExercise(group);
     const sets = document.getElementById(`${group.id}-progress-sets`);
     const checks = document.getElementById(`${group.id}-progress-checks`);
     const status = document.getElementById(`${group.id}-progress-status`);
@@ -1575,7 +1590,8 @@ const getCheckboxes = () => checklistItems
   .filter(Boolean);
 
 const getChecklistStats = () => {
-  const checkboxes = getCheckboxes();
+  const activeIds = new Set(REHAB_EXERCISES.filter(isActiveExercise).flatMap(exercise => exercise.checkIds));
+  const checkboxes = getCheckboxes().filter(checkbox => activeIds.has(checkbox.id) || checkbox.id.startsWith("monitor-"));
   return {
     checkboxes: checkboxes,
     completed: checkboxes.filter((checkbox) => checkbox.checked).length,
@@ -3218,7 +3234,7 @@ const resetAllSetRows = () => {
   const shouldReset = window.confirm(t("reset.allSetsConfirm"));
   if (!shouldReset) return;
 
-  resetSetRowsForTrackers(exerciseSetTrackers);
+  resetSetRowsForTrackers(exerciseSetTrackers.filter(tracker => REHAB_EXERCISES.some(exercise => exercise.id === tracker.id && isActiveExercise(exercise))));
 };
 
 const setupSetRows = () => {
@@ -3365,10 +3381,10 @@ const setupReset = () => {
     const shouldReset = window.confirm(t("reset.checklistConfirm"));
     if (!shouldReset) return;
 
-    getCheckboxes().forEach((checkbox) => {
+    getChecklistStats().checkboxes.forEach((checkbox) => {
       checkbox.checked = false;
     });
-    localStorage.removeItem(STORAGE_KEYS.checklist);
+    saveChecklist();
     updateProgress();
     saveTodaySessionHistory();
     renderSessionHistory();
@@ -3454,6 +3470,81 @@ const setupSessionMeta = () => {
   );
 };
 
+const setupProgramTabs = () => {
+  const tabs = [...document.querySelectorAll('.program-tabs [role="tab"]')];
+  if (tabs.length !== 2) return;
+  const selectProgram = (index) => {
+    pauseOtherSetRows(null);
+    activeProgram = index === 1 ? "phaseTwo" : "original";
+    tabs.forEach((tab, i) => {
+      tab.setAttribute("aria-selected", String(i === index));
+      tab.tabIndex = i === index ? 0 : -1;
+      document.getElementById(tab.getAttribute("aria-controls")).hidden = i !== index;
+    });
+    MOBILE_SESSION_STEPS = ALL_MOBILE_SESSION_STEPS.filter(step => step.id === "monitoring" || REHAB_EXERCISES.some(exercise => exercise.id === step.id && isActiveExercise(exercise)));
+    mobileSessionState.currentIndex = findFirstIncompleteMobileStep(getMobileSessionCompletionStates());
+    renderSetRows();
+    updateProgress();
+    renderMobileSessionMode();
+    try { localStorage.setItem("kneeRehabActiveProgram", activeProgram); } catch { /* The tracker remains usable. */ }
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectProgram(index));
+    tab.addEventListener("keydown", event => {
+      const nextIndex = { ArrowLeft: 1 - index, ArrowRight: 1 - index, Home: 0, End: 1 }[event.key];
+      if (nextIndex === undefined) return;
+      event.preventDefault();
+      selectProgram(nextIndex);
+      tabs[nextIndex].focus();
+    });
+  });
+  let index = 0;
+  try { index = localStorage.getItem("kneeRehabActiveProgram") === "phaseTwo" ? 1 : 0; } catch { /* Use original program. */ }
+  selectProgram(index);
+  document.querySelector(".program-tabs").hidden = false;
+};
+
+// Preserve records entered in the first, standalone Phase 2 version.
+const migrateLegacyPhaseTwo = () => {
+  const migrationKey = "kneeRehabPhaseTwoIntegratedV1";
+  try {
+    if (localStorage.getItem(migrationKey)) return;
+    const legacy = JSON.parse(localStorage.getItem("kneeRehabPhaseTwoSessionsV1") || "{}");
+    if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) return;
+    const defaults = createInitialSetRowState();
+    const mapping = { "p2-chair": "chair", "p2-split": "split", "p2-bridge": "bridge", "p2-side": "side" };
+    Object.entries(legacy).forEach(([dateKey, entry]) => {
+      if (!createDateFromKey(dateKey) || !entry || typeof entry !== "object") return;
+      const record = getSessionRecordForDate(dateKey);
+      record.setRows = { ...(record.setRows || {}) };
+      record.exercises = { ...(record.exercises || {}) };
+      phaseTwoProgram.exercises.forEach(exercise => {
+        exercise.setIds.forEach((setId, index) => {
+          const oldSetNumber = exercise.setIds.length === 4 ? index % 2 + 1 : index + 1;
+          if (entry[`${mapping[exercise.id]}-${oldSetNumber}`] !== true || record.setRows[setId]?.isDone) return;
+          const row = { ...defaults[setId], isDone: true, repState: "completed", timeRemainingSec: 0 };
+          row.currentRep = row.totalReps;
+          record.setRows[setId] = row;
+        });
+        const completedSets = exercise.setIds.filter(id => record.setRows[id]?.isDone).length;
+        record.exercises[exercise.id] = {
+          completedSets, totalSets: exercise.setIds.length, completedChecks: 0,
+          totalChecks: exercise.checkIds.length, statusKey: completedSets ? "status.inProgress" : "status.notStarted"
+        };
+      });
+      if (typeof entry.notes === "string" && entry.notes.trim()) {
+        record.notes = [record.notes, entry.notes].filter(Boolean).join("\n\n");
+      }
+      calendarState.sessionHistory[dateKey] = record;
+    });
+    // Keep the old storage as a recoverable backup, including if storage writes fail.
+    localStorage.setItem(STORAGE_KEYS.sessionHistory, JSON.stringify(calendarState.sessionHistory));
+    localStorage.setItem(migrationKey, "1");
+  } catch (error) {
+    console.warn("Could not migrate legacy Phase 2 records; original data remains available.", error);
+  }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   setupLanguageSwitcher();
   setupSessionMeta();
@@ -3467,7 +3558,9 @@ document.addEventListener("DOMContentLoaded", () => {
   setupNotes();
   setupReset();
   setupSetRows();
+  migrateLegacyPhaseTwo();
   applySelectedDateSession();
   setupMobileSessionMode();
+  setupProgramTabs();
   setupSupabaseSync();
 });

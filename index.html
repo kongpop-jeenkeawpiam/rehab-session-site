@@ -10,6 +10,10 @@
 </head>
 <body>
   <div class="page-shell">
+    <nav class="program-tabs" role="tablist" aria-label="Exercise programs" hidden>
+      <button type="button" id="original-program-tab" role="tab" aria-controls="original-program" aria-selected="true">Original program</button>
+      <button type="button" id="phase-two-tab" role="tab" aria-controls="phase-two-panel" aria-selected="false" tabindex="-1">Phase 2 · Strength & control</button>
+    </nav>
     <section id="mobile-session-overview" class="mobile-session-overview" aria-labelledby="mobile-session-heading">
       <div class="mobile-session-overview-header">
         <div>
@@ -225,6 +229,7 @@
     </header>
 
     <main>
+      <div id="original-program" class="program-exercises" role="tabpanel" aria-labelledby="original-program-tab">
       <section class="card plan-card mobile-secondary" aria-labelledby="daily-plan-heading">
         <div class="section-heading">
           <span class="section-icon" aria-hidden="true">P</span>
@@ -793,6 +798,8 @@
         </div>
       </section>
 
+      </div>
+      <section id="phase-two-panel" class="program-exercises" role="tabpanel" aria-labelledby="phase-two-tab" hidden></section>
       <section id="monitoring-card" class="card checklist-card accent-warning" data-mobile-step="monitoring" aria-labelledby="monitoring-heading">
         <div class="section-heading compact">
           <span class="section-icon" aria-hidden="true">🔴</span>
@@ -911,6 +918,7 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="phase-two.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>

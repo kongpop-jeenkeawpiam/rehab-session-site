@@ -78,3 +78,25 @@ For the full integration contract, see [`docs/api.md`](docs/api.md).
 - Checklist progress, notes, and local session history are saved in the current browser using `localStorage`; with Supabase configured, authenticated progress also syncs to the cloud.
 - Exercise set rows include per-set timers saved locally in the browser.
 - This tracker follows an existing rehab plan and does not replace medical advice.
+## Phase 2 bodyweight program
+
+The **Phase 2 · Strength & control** tab contains a separate PFPS starting routine:
+high-chair squat, supported split squat, glute bridge, and side-lying leg lift.
+It uses bodyweight, a stable chair against a wall or a heavy desk, and a floor mat
+or thin blanket. No resistance bands or dumbbells are required.
+
+The tab uses the original tracker’s timers, repetition loops, voice cues,
+technique checklists, mobile exercise navigation, calendar, notes, session
+history, and authenticated Supabase sync. Bilateral exercises have separate
+left/right rows: 12 set rows in total (two per side for split squats and leg lifts).
+Both programs are stored in the existing session JSON for the same date, with
+distinct exercise IDs. On-screen progress and resets apply to the selected
+program; completion history and notes are shared for the day.
+Records from the earlier `kneeRehabPhaseTwoSessionsV1` storage are migrated
+once into session history, preserving the old storage as a recovery backup.
+The new tab's name is separate from the original program's three-stage protocol.
+
+Exercise selection follows the [Mass General Brigham PFPS protocol](https://www.massgeneral.org/assets/mgh/pdf/orthopaedics/sports-medicine/physical-therapy/rehabilitation-protocol-for-patellofemoral-pain-syndrome.pdf)
+and symptom monitoring follows [NHS guidance](https://www.dynamichealth.nhs.uk/help-and-advice/knee-pain/patellofemoral-knee-pain/).
+The displayed dosage is a conservative starting example, not an automatic
+progression rule or clearance to return to sport. No personal symptom history is embedded.
