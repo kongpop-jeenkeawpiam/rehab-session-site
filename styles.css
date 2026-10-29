@@ -1115,6 +1115,9 @@ textarea {
   }
 
   body.mobile-session-ready .page-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
     padding: 0.75rem;
   }
 
@@ -1220,27 +1223,62 @@ textarea {
     background: var(--primary-soft);
   }
 
-  body.mobile-session-ready .hero,
   body.mobile-session-ready .mobile-secondary,
   body.mobile-session-ready .footer-actions,
   body.mobile-session-ready [data-mobile-step].mobile-inactive-step {
     display: none;
   }
 
-  body.mobile-session-ready.mobile-more-open .hero,
+  body.mobile-session-ready:not(.mobile-more-open) .mobile-session-overview {
+    order: 1;
+  }
+
+  body.mobile-session-ready:not(.mobile-more-open) .hero {
+    display: contents;
+  }
+
+  body.mobile-session-ready:not(.mobile-more-open) .hero > :not(.mobile-home-calendar) {
+    display: none;
+  }
+
+  body.mobile-session-ready:not(.mobile-more-open) main {
+    display: contents;
+  }
+
+  body.mobile-session-ready:not(.mobile-more-open) [data-mobile-step] {
+    order: 2;
+  }
+
+  body.mobile-session-ready:not(.mobile-more-open) .mobile-home-calendar {
+    order: 3;
+    margin: 0;
+    padding: 1rem;
+    border-radius: 20px;
+    background: var(--card);
+  }
+
+  body.mobile-session-ready:not(.mobile-more-open) .today-summary-card {
+    order: 4;
+  }
+
   body.mobile-session-ready.mobile-more-open .mobile-secondary,
-  body.mobile-session-ready.mobile-more-open .footer-actions,
   body.mobile-session-ready.mobile-session-complete .mobile-completion-summary {
     display: grid;
   }
 
-  body.mobile-session-ready main {
-    display: grid;
-    grid-template-columns: 1fr;
-    margin-top: 0.75rem;
+  body.mobile-session-ready.mobile-more-open .footer-actions {
+    display: flex;
+    margin-top: 0;
   }
 
-  body.mobile-session-ready .checklist-card {
+  body.mobile-session-ready.mobile-more-open main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0;
+  }
+
+  body.mobile-session-ready .checklist-card,
+  body.mobile-session-ready .today-summary-card {
     padding: 1rem;
     border-radius: 20px;
     box-shadow: none;

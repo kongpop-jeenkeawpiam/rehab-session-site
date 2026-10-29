@@ -31,6 +31,46 @@ assert.match(
 );
 
 assert.match(
+  html,
+  /<section[^>]*class="[^"]*\bcalendar-card\b[^"]*\bmobile-home-calendar\b[^"]*"[^>]*aria-labelledby="calendar-heading"/,
+  "completion calendar should be marked for display on the initial mobile screen"
+);
+
+const todaySummarySectionMatch = html.match(
+  /<section[^>]*aria-labelledby="todays-summary-heading"[^>]*>/
+);
+assert.ok(todaySummarySectionMatch, "page should include the session summary section");
+assert.doesNotMatch(
+  todaySummarySectionMatch[0],
+  /\bmobile-secondary\b/,
+  "session summary should not be hidden behind More on the initial mobile screen"
+);
+
+assert.match(
+  styles,
+  /body\.mobile-session-ready:not\(\.mobile-more-open\)\s+\.hero\s*\{\s*display:\s*contents;/,
+  "mobile default view should expose the completion calendar from hero without showing secondary hero panels"
+);
+
+assert.match(
+  styles,
+  /body\.mobile-session-ready:not\(\.mobile-more-open\)\s+\.hero\s*>\s*:not\(\.mobile-home-calendar\)\s*\{\s*display:\s*none;/,
+  "non-calendar hero children should stay hidden until More is opened on mobile"
+);
+
+assert.match(
+  styles,
+  /body\.mobile-session-ready:not\(\.mobile-more-open\)\s+\.mobile-home-calendar\s*\{[^}]*order:\s*3;/s,
+  "completion calendar should appear on the initial mobile screen below the active exercise"
+);
+
+assert.match(
+  styles,
+  /body\.mobile-session-ready:not\(\.mobile-more-open\)\s+\.today-summary-card\s*\{[^}]*order:\s*4;/s,
+  "session summary should appear on the initial mobile screen below the completion calendar"
+);
+
+assert.match(
   script,
   /const setupMobileSessionMode = \(\) =>/,
   "script should initialize mobile session mode"
